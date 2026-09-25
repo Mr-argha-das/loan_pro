@@ -3,7 +3,14 @@
     "name": "loanpro/crm",
     "type": "project",
     "description": "LoanPro - Finance & Insurance Management System (CRM / ERP for loan, insurance and disbursement operations).",
-    "keywords": ["laravel", "crm", "loan", "insurance", "fintech", "nbfc"],
+    "keywords": [
+        "laravel",
+        "crm",
+        "loan",
+        "insurance",
+        "fintech",
+        "nbfc"
+    ],
     "license": "proprietary",
     "require": {
         "php": "^8.2",
@@ -53,17 +60,5 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "path",
-            "url": "/opt/loanpro-setup/deps/*",
-            "options": {
-                "symlink": false
-            }
-        },
-        {
-            "packagist.org": false
-        }
-    ]
+    "prefer-stable": true
 }
