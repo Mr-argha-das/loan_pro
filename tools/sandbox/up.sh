@@ -78,5 +78,27 @@ if [[ ! -f "$ROOT/public/build/manifest.json" ]]; then
 fi
 
 step "5/5 server"
+
+# A previous run may still hold the port (a stale server pointed at an old
+# document root is exactly what makes the app look "broken but running").
+if command -v ss >/dev/null 2>&1 && ss -ltn 2>/dev/null | grep -q ":$PORT "; then
+    STALE="$(pgrep -f "serve\.mjs --port $PORT" || true)"
+    if [[ -n "$STALE" ]]; then
+        echo "    stopping the previous LoanPro server (pid $STALE)"
+        # shellcheck disable=SC2086
+        kill $STALE 2>/dev/null || true
+        for _ in $(seq 1 20); do
+            ss -ltn 2>/dev/null | grep -q ":$PORT " || break
+            sleep 0.25
+        done
+    fi
+fi
+if ss -ltn 2>/dev/null | grep -q ":$PORT "; then
+    echo "    !! port $PORT is already in use by another process:" >&2
+    ss -ltnp 2>/dev/null | grep ":$PORT " >&2 || true
+    echo "    run with another port, e.g.  PORT=8001 bash tools/sandbox/up.sh" >&2
+    exit 1
+fi
+
 echo "    http://0.0.0.0:$PORT  (docroot $ROOT/public)"
 exec node "$RUNTIME/serve.mjs" --port "$PORT"
