@@ -16,11 +16,13 @@
  */
 import { PHP } from '@php-wasm/universal';
 import { loadNodeRuntime, useHostFilesystem } from '@php-wasm/node';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const RUNTIME_DIR = dirname(fileURLToPath(import.meta.url));
-export const REPO_ROOT = process.env.LOANPRO_ROOT || '/home/user/loan_pro';
+// The checkout that owns this runtime (tools/sandbox/runtime -> project root),
+// so a clone works from any directory. Override with LOANPRO_ROOT if needed.
+export const REPO_ROOT = process.env.LOANPRO_ROOT || resolve(RUNTIME_DIR, '../../..');
 export const PHP_VERSION = process.env.LOANPRO_PHP_VERSION || '8.4';
 
 let processIdCounter = 100 + Math.floor(Math.random() * 400);
