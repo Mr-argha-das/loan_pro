@@ -1,0 +1,9 @@
+{
+    "name": "loanpro-sandbox-runtime",
+    "private": true,
+    "type": "module",
+    "description": "WebAssembly PHP runtime used to run LoanPro in the Arena sandbox (no native PHP, no Docker, no Packagist).",
+    "dependencies": {
+        "@php-wasm/node": "^3.1.54"
+    }
+}
