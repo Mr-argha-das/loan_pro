@@ -1,0 +1,10 @@
+{
+    "name": "loanpro-qa",
+    "private": true,
+    "type": "module",
+    "description": "Headless-browser verification harness for LoanPro (no apt / no storage.googleapis.com needed).",
+    "dependencies": {
+        "@sparticuz/chromium": "^153.0.0",
+        "puppeteer-core": "^24.43.1"
+    }
+}
