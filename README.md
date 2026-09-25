@@ -50,7 +50,11 @@ Master management (15 masters) · Settings · Audit log.
 ## Local setup (with PHP + Composer available)
 
 Full Linux walkthrough (installs, MySQL vs SQLite, troubleshooting):
-**[docs/LOCAL-SETUP.md](docs/LOCAL-SETUP.md)**.
+**[docs/LOCAL-SETUP.md](docs/LOCAL-SETUP.md)** — clone commands ke saath:
+**[docs/CLONE-AND-RUN.md](docs/CLONE-AND-RUN.md)**.
+
+> The complete application lives on the `arena/01a0d844-loan-pro` branch:
+> `git clone -b arena/01a0d844-loan-pro https://github.com/Mr-argha-das/loan_pro.git`
 
 ```bash
 cp .env.example .env          # set DB_* for MySQL
