@@ -340,6 +340,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Destructive buttons normally live inside a regular POST/DELETE form.
+        // Submit that form after the confirmation instead of silently stopping.
+        const parentForm = trigger.closest('form');
+        if (parentForm) {
+            parentForm.submit();
+            return;
+        }
+
         if (trigger.tagName === 'A' && trigger.href) {
             window.location.href = trigger.href;
             return;
