@@ -415,12 +415,17 @@ document.addEventListener('DOMContentLoaded', () => {
     /* notification bell */
     document.querySelector('[data-notification-bell]')?.addEventListener('click', async (event) => {
         event.preventDefault();
-        const payload = await LoanPro.request('/notifications/feed');
         const dropdown = document.getElementById('lp-notification-feed');
-
-        if (dropdown) {
-            dropdown.innerHTML = payload.html;
+        try {
+            const payload = await LoanPro.request('/notifications/feed');
+            if (dropdown) {
+                dropdown.innerHTML = payload.html;
+                bootstrap.Dropdown.getOrCreateInstance(event.currentTarget).show();
+            }
+        } catch (error) {
+            if (dropdown) dropdown.innerHTML = '<div class="lp-empty py-4"><i class="bi bi-exclamation-triangle"></i>Unable to load notifications. Please try again.</div>';
             bootstrap.Dropdown.getOrCreateInstance(event.currentTarget).show();
+            LoanPro.toast(error.message ?? 'Unable to load notifications.', 'danger');
         }
     });
 
