@@ -83,6 +83,7 @@ class AttendanceController extends Controller
 
     public function checkIn(Request $request): RedirectResponse|JsonResponse
     {
+        $request->validate(['latitude' => ['nullable', 'numeric', 'between:-90,90'], 'longitude' => ['nullable', 'numeric', 'between:-180,180']]);
         $user = $request->user();
         $employee = $user->employee;
 
@@ -108,6 +109,8 @@ class AttendanceController extends Controller
             ['employee_id' => $employee->id, 'attendance_date' => today()->toDateString()],
             [
                 'check_in_at' => now(),
+                'check_in_latitude' => $request->input('latitude'),
+                'check_in_longitude' => $request->input('longitude'),
                 'status' => $lateMinutes > $grace ? 'late' : 'present',
                 'late_minutes' => $lateMinutes > $grace ? $lateMinutes : 0,
                 'work_mode' => $request->input('work_mode', 'office'),
@@ -123,6 +126,7 @@ class AttendanceController extends Controller
 
     public function checkOut(Request $request): RedirectResponse|JsonResponse
     {
+        $request->validate(['latitude' => ['nullable', 'numeric', 'between:-90,90'], 'longitude' => ['nullable', 'numeric', 'between:-180,180']]);
         $employee = $request->user()->employee;
 
         abort_unless($employee, 403, 'Your account is not linked to an employee profile.');
@@ -149,6 +153,8 @@ class AttendanceController extends Controller
 
         $attendance->forceFill([
             'check_out_at' => now(),
+            'check_out_latitude' => $request->input('latitude'),
+            'check_out_longitude' => $request->input('longitude'),
             'worked_minutes' => $worked,
             'status' => $worked < $halfDayMinutes ? 'half_day' : $attendance->status,
         ])->save();

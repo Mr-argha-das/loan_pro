@@ -32,7 +32,7 @@
                     <div class="fw-semibold">Onboarding progress</div>
                     <div class="text-muted small">
                         @if ($isEdit)
-                            {{ $lead->progressPercent() }}% complete · Saved {{ $lead->updated_at?->diffForHumans() }}
+                            {{ $step >= 10 ? 100 : $lead->progressPercent() }}% complete · Saved {{ $lead->updated_at?->diffForHumans() }}
                         @else
                             Complete each step to build a lender-ready application.
                         @endif

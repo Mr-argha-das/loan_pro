@@ -23,6 +23,8 @@
                             <div>
                                 <div class="fw-semibold">{{ $notification->title }}</div>
                                 <div class="text-muted" style="font-size:.78rem">{{ $notification->message }}</div>
+                                @if ($notification->actor_id)<div class="small text-muted"><i class="bi bi-person"></i> By {{ $notification->actor?->name ?? 'System' }}</div>@endif
+                                @if (!empty($notification->data))<details class="small mt-1"><summary class="text-primary">View full details</summary><pre class="small bg-light p-2 mt-1 mb-0">{{ json_encode($notification->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre></details>@endif
                                 @if ($notification->url)
                                     <a href="{{ $notification->url }}" class="small">Open record <i class="bi bi-arrow-right"></i></a>
                                 @endif

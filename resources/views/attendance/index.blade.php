@@ -12,13 +12,15 @@
 @section('page-actions')
     <div class="d-flex flex-wrap gap-2">
         @if (! $today)
-            <form method="POST" action="{{ route('attendance.check-in') }}">
+            <form method="POST" action="{{ route('attendance.check-in') }}" data-attendance-geo>
                 @csrf
+                <input type="hidden" name="latitude"><input type="hidden" name="longitude">
                 <button class="btn btn-success btn-sm"><i class="bi bi-box-arrow-in-right"></i> Check in</button>
             </form>
         @elseif (! $today->check_out_at)
-            <form method="POST" action="{{ route('attendance.check-out') }}">
+            <form method="POST" action="{{ route('attendance.check-out') }}" data-attendance-geo>
                 @csrf
+                <input type="hidden" name="latitude"><input type="hidden" name="longitude">
                 <button class="btn btn-primary btn-sm"><i class="bi bi-box-arrow-right"></i> Check out</button>
             </form>
         @else

@@ -11,6 +11,18 @@ import Chart from 'chart.js/auto';
 window.bootstrap = bootstrap;
 window.Chart = Chart;
 
+/* ------------------------------------------------------------------ attendance location */
+document.addEventListener('submit', (event) => {
+    const form = event.target.closest?.('[data-attendance-geo]');
+    if (!form || form.dataset.locationReady || !navigator.geolocation) return;
+    event.preventDefault();
+    navigator.geolocation.getCurrentPosition((position) => {
+        form.querySelector('[name=latitude]')?.setAttribute('value', position.coords.latitude);
+        form.querySelector('[name=longitude]')?.setAttribute('value', position.coords.longitude);
+        form.dataset.locationReady = '1'; form.submit();
+    }, () => { form.dataset.locationReady = '1'; form.submit(); }, { enableHighAccuracy: true, timeout: 8000 });
+});
+
 /* ------------------------------------------------------------------ csrf */
 
 const csrfToken = () =>

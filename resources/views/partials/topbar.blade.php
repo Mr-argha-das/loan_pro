@@ -26,8 +26,9 @@
 
     <div class="ms-auto d-flex align-items-center gap-2">
         @if ($user->employee && $user->hasPermissionTo('attendance.mark'))
-            <form method="POST" action="{{ route($todayAttendance?->check_in_at ? 'attendance.check-out' : 'attendance.check-in') }}" class="d-none d-md-block">
+            <form method="POST" action="{{ route($todayAttendance?->check_in_at ? 'attendance.check-out' : 'attendance.check-in') }}" class="d-none d-md-block" data-attendance-geo>
                 @csrf
+                <input type="hidden" name="latitude"><input type="hidden" name="longitude">
                 <button class="btn btn-sm {{ $todayAttendance?->check_in_at ? 'btn-outline-secondary' : 'btn-success' }}">
                     <i class="bi {{ $todayAttendance?->check_in_at ? 'bi-box-arrow-right' : 'bi-box-arrow-in-right' }}"></i>
                     {{ $todayAttendance?->check_in_at ? 'Check out' : 'Check in' }}

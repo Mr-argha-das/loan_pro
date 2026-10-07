@@ -86,6 +86,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('{lead}/remarks', [LeadController::class, 'addRemark'])->name('remarks.store');
         Route::post('{lead}/convert', [LeadController::class, 'convert'])->name('convert');
         Route::get('{lead}/quick-view', [LeadController::class, 'quickView'])->name('quick-view');
+        Route::get('{lead}/documents/download-zip', [LeadController::class, 'downloadDocumentsZip'])->name('documents.zip');
         Route::delete('{lead}', [LeadController::class, 'destroy'])->name('destroy');
     });
 

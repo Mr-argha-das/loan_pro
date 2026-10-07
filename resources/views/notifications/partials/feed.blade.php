@@ -5,7 +5,7 @@
         </span>
         <span class="flex-grow-1">
             <span class="d-block fw-semibold text-body" style="font-size:.83rem">{{ $notification->title }}</span>
-            <span class="d-block text-muted" style="font-size:.75rem">{{ \Illuminate\Support\Str::limit($notification->message, 72) }}</span>
+            <span class="d-block text-muted" style="font-size:.75rem">{{ $notification->message }}</span>
             <span class="d-block text-muted" style="font-size:.7rem">{{ $notification->created_at?->diffForHumans() }}</span>
         </span>
         @if (! $notification->read_at)

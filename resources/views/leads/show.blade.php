@@ -273,6 +273,7 @@
             {{-- ------------------------------------------------------ documents --}}
             <div class="tab-pane fade" id="lead-tabs-documents" role="tabpanel" aria-labelledby="lead-tabs-documents-tab">
                 <x-card title="Documents" icon="bi-folder-check" description="Files are stored privately and never exposed publicly.">
+                    <x-slot:actions><a href="{{ route('leads.documents.zip', $lead) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-zip"></i> Download all ZIP</a></x-slot:actions>
                     <x-slot:actions>
                         @can('create', App\Models\Document::class)
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#upload-document-modal">

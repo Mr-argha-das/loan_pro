@@ -1,6 +1,8 @@
 @php
     $customer = $lead->customer;
     $primary = $selectedLenders->firstWhere('is_primary', true) ?? $selectedLenders->first();
+    $kycStatus = $customer?->kyc_status ?: 'pending';
+    $kycLabel = 'KYC: '.ucwords(str_replace(['_', '-'], ' ', $kycStatus));
 @endphp
 
 <x-section title="Lead Summary" icon="bi-clipboard-check" description="Review everything captured before creating the application.">
@@ -13,7 +15,7 @@
                     <div class="fw-semibold">{{ $customer?->name }}</div>
                     <div class="text-muted small">{{ $customer?->mobile }} &middot; {{ $customer?->email ?? 'No email' }}</div>
                     <div class="d-flex gap-1 mt-1">
-                        <x-status-badge :status="$customer?->kyc_status ?? 'pending' :label="'KYC: '.ucfirst(str_replace('_', ' ', $customer?->kyc_status ?? 'pending'))" />
+                        <span class="lp-badge lp-badge--{{ \App\Support\StatusBadge::color($kycStatus) }} bg-{{ \App\Support\StatusBadge::color($kycStatus) }}-subtle text-{{ \App\Support\StatusBadge::color($kycStatus) }} bg-opacity-10 lp-badge--dot" title="{{ $kycLabel }}">{{ $kycLabel }}</span>
                         @if ($lead->is_otp_verified)
                             <span class="lp-badge bg-success-subtle text-success bg-opacity-10"><i class="bi bi-patch-check"></i> Verified</span>
                         @endif

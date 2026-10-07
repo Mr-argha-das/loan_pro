@@ -29,6 +29,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
+use ZipArchive;
 
 class LeadController extends Controller
 {
@@ -382,12 +384,35 @@ class LeadController extends Controller
             ->with('success', 'Application '.$application->application_code.' created from lead '.$lead->lead_code.'.');
     }
 
+    public function downloadDocumentsZip(Lead $lead)
+    {
+        $this->authorize('view', $lead);
+        $documents = $lead->documents()->get();
+        abort_if($documents->isEmpty(), 404, 'This lead has no documents to download.');
+
+        $zipPath = storage_path('app/private/'.'lead-'.$lead->lead_code.'-documents-'.now()->format('YmdHis').'.zip');
+        $zip = new ZipArchive();
+        abort_unless($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 500, 'Unable to create archive.');
+        $used = [];
+        foreach ($documents as $document) {
+            $absolute = Storage::disk($document->disk)->path($document->path);
+            if (! is_file($absolute)) continue;
+            $name = $document->typeName().' - '.$document->original_name;
+            $name = preg_replace('/[^A-Za-z0-9._ -]/', '', $name) ?: $document->original_name;
+            $base = $name; $i = 1;
+            while (isset($used[$name])) $name = pathinfo($base, PATHINFO_FILENAME).' ('.$i++.').'.pathinfo($base, PATHINFO_EXTENSION);
+            $used[$name] = true;
+            $zip->addFile($absolute, $name);
+        }
+        $zip->close();
+
+        return response()->download($zipPath, 'lead-'.$lead->lead_code.'-documents.zip')->deleteFileAfterSend(true);
+    }
+
     public function destroy(Lead $lead): RedirectResponse
     {
         $this->authorize('delete', $lead);
-
         $lead->delete();
-
         return redirect()->route('leads.index')->with('success', 'Lead deleted.');
     }
 
