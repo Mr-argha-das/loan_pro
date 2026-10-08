@@ -22,7 +22,7 @@
             </p>
 
             <div class="d-flex flex-column gap-2" style="opacity:.9">
-                @foreach (['10-step lead onboarding with OTP verification', 'Live lender comparison with ROI, APR & EMI', 'Disbursement, invoicing and collection tracking', 'Role based access with a full audit trail'] as $feature)
+                @foreach (['9-step lead onboarding with verification', 'Live lender comparison with ROI, APR & EMI', 'Disbursement, invoicing and collection tracking', 'Role based access with a full audit trail'] as $feature)
                     <div class="d-flex align-items-center gap-2 small">
                         <i class="bi bi-check-circle-fill text-success"></i>{{ $feature }}
                     </div>

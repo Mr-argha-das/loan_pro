@@ -78,7 +78,7 @@ class DashboardService
 
         return [
             ['stage' => 'Lead Created', 'value' => (clone $base)->count()],
-            ['stage' => 'Verified', 'value' => (clone $base)->whereNotNull('otp_verified_at')->count()],
+            ['stage' => 'Verified', 'value' => (clone $base)->where('status', 'verified')->count()],
             ['stage' => 'Lender Selected', 'value' => (clone $base)->whereHas('lenders')->count()],
             ['stage' => 'Application Created', 'value' => LoanApplication::query()->ownedBy($user)->count()],
             ['stage' => 'Approved', 'value' => LoanApplication::query()->ownedBy($user)->whereIn('status', ['approved', 'disbursed'])->count()],

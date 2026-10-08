@@ -38,7 +38,7 @@ class CustomerController extends Controller
             ->when($request->filled('kyc_status'), fn ($q) => $q->where('kyc_status', $request->string('kyc_status')))
             ->when($request->filled('city'), fn ($q) => $q->where('city', $request->string('city')))
             ->when($request->filled('assigned_employee_id'), fn ($q) => $q->where('assigned_employee_id', $request->integer('assigned_employee_id')))
-            ->with(['assignedEmployee', 'creator'])
+            ->with(['assignedEmployee', 'creator', 'latestLead.leadStatus', 'latestLead.statusHistories'])
             ->withCount(['leads', 'applications'])
             ->orderBy($request->string('sort', 'created_at')->toString(), $request->string('direction', 'desc')->toString() === 'asc' ? 'asc' : 'desc')
             ->paginate($this->perPage($request))

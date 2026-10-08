@@ -25,15 +25,17 @@ class Lead extends Model
     public const STEPS = [
         1 => 'Customer Details',
         2 => 'Basic Information',
-        3 => 'OTP Verification',
-        4 => 'Personal Information',
-        5 => 'Professional Information',
-        6 => 'KYC & Documents',
-        7 => 'Loan & Insurance',
-        8 => 'Lender Selection',
-        9 => 'Selected Lenders',
-        10 => 'Lead Summary',
+        3 => 'Personal Information',
+        4 => 'Professional Information',
+        5 => 'KYC & Documents',
+        6 => 'Loan & Insurance',
+        7 => 'Lender Selection',
+        8 => 'Selected Lenders',
+        9 => 'Lead Summary',
     ];
+
+    /** Last wizard step number (Lead Summary). */
+    public const LAST_STEP = 9;
 
     protected $fillable = [
         'lead_code', 'customer_id', 'product_id', 'product_category_id', 'product_subcategory_id',

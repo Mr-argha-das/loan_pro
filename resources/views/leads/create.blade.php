@@ -3,7 +3,7 @@
 @php
     $lead = $lead ?? null;
     $isEdit = (bool) $lead?->exists;
-    $step = $isEdit ? max(1, min(10, (int) $step)) : 1;
+    $step = $isEdit ? max(1, min(\App\Models\Lead::LAST_STEP, (int) $step)) : 1;
     $selectedLenders = $selectedLenders ?? collect();
     $formAction = $step === 1 && ! $isEdit
         ? route('leads.store')
@@ -13,7 +13,7 @@
 @section('title', $isEdit ? 'Lead '.$lead->lead_code : 'Create Lead')
 @section('page-header', true)
 @section('page-title', $isEdit ? 'Lead '.$lead->lead_code : 'Create New Lead')
-@section('page-subtitle', 'Step '.$step.' of 10 · '.($steps[$step] ?? 'Lead Summary'))
+@section('page-subtitle', 'Step '.$step.' of '.\App\Models\Lead::LAST_STEP.' · '.($steps[$step] ?? 'Lead Summary'))
 
 @section('breadcrumb')
     <li class="breadcrumb-item"><a href="{{ route('leads.index') }}">Leads</a></li>
@@ -34,18 +34,13 @@
                         @if ($isEdit)
                             {{ $lead->progressPercent() }}% complete · Saved {{ $lead->updated_at?->diffForHumans() }}
                         @else
-                            Complete each step to build a lender-ready application.
+                            Complete each step to save a complete lead.
                         @endif
                     </div>
                 </div>
                 @if ($isEdit)
                     <div class="d-flex align-items-center gap-2">
                         <x-status-badge :status="$lead->status" :label="$lead->leadStatus?->name" />
-                        @if ($lead->is_otp_verified)
-                            <span class="lp-badge bg-success-subtle text-success bg-opacity-10"><i class="bi bi-patch-check-fill"></i> Mobile verified</span>
-                        @else
-                            <span class="lp-badge bg-warning-subtle text-warning bg-opacity-10"><i class="bi bi-shield-exclamation"></i> OTP pending</span>
-                        @endif
                     </div>
                 @endif
             </div>
@@ -73,18 +68,37 @@
     const saveUrls = {
         store: '{{ route('leads.store') }}',
         step: (step) => leadId ? `/leads/${leadId}/wizard/${step}` : '{{ route('leads.store') }}',
-        otpSend: leadId ? `/leads/${leadId}/otp` : null,
-        otpVerify: leadId ? `/leads/${leadId}/otp/verify` : null,
         lenders: '{{ route('lenders.products') }}',
+        pincode: (pin) => `/pincodes/${pin}`,
     };
 
     const form = document.getElementById('lead-wizard-form');
     const step = {{ $step }};
 
-    /** Sub-category cascade: category -> purposes. */
+    /** Product -> categories: picking Loans shows loan categories, Insurance shows insurance ones. */
+    const productSelect = document.querySelector('[data-product-select]');
     const categorySelect = document.getElementById('product_category_id');
     const subcategorySelect = document.getElementById('product_subcategory_id');
 
+    function filterCategories() {
+        if (!productSelect || !categorySelect) return;
+
+        const productId = productSelect.value;
+        [...categorySelect.options].forEach((option) => {
+            if (!option.value) return;
+            option.hidden = productId !== '' && option.dataset.product !== productId;
+        });
+
+        if (categorySelect.selectedOptions[0]?.hidden) {
+            categorySelect.value = '';
+        }
+
+        filterSubcategories();
+    }
+
+    productSelect?.addEventListener('change', filterCategories);
+
+    /** Sub-category cascade: category -> purposes. */
     function filterSubcategories() {
         if (!categorySelect || !subcategorySelect) return;
 
@@ -100,7 +114,7 @@
     }
 
     categorySelect?.addEventListener('change', filterSubcategories);
-    filterSubcategories();
+    filterCategories();
 
     /* --------------------------------------------------------- save actions */
 
@@ -150,7 +164,7 @@
         } catch (error) {
             console.warn('Lender serialisation skipped', error);
         }
-        step === 10 ? finishWizard() : submitStep();
+        step === {{ \App\Models\Lead::LAST_STEP }} ? finishWizard() : submitStep();
     });
 
     document.querySelector('[data-save-draft]')?.addEventListener('click', () => {
@@ -171,108 +185,36 @@
     });
 
     async function finishWizard() {
-        await submitStep({ next: 10 });
+        await submitStep({ next: {{ \App\Models\Lead::LAST_STEP }} });
 
         if (leadId) {
             window.location.href = `/leads/${leadId}`;
         }
     }
 
-    /* --------------------------------------------------------- OTP handling */
+    /* ------------------------------------------------- pincode auto-fill */
 
-    const otpInputs = document.querySelectorAll('[data-otp]');
-    const otpValue = () => [...otpInputs].map((input) => input.value).join('');
+    const pincodeInput = document.querySelector('[data-pincode]');
+    const cityInput = document.querySelector('[data-pincode-city]');
+    const stateInput = document.querySelector('[data-pincode-state]');
 
-    otpInputs.forEach((input, index) => {
-        input.addEventListener('input', () => {
-            input.value = input.value.replace(/\D/g, '').slice(0, 1);
-            if (input.value && otpInputs[index + 1]) otpInputs[index + 1].focus();
-        });
-
-        input.addEventListener('keydown', (event) => {
-            if (event.key === 'Backspace' && !input.value && otpInputs[index - 1]) {
-                otpInputs[index - 1].focus();
-            }
-        });
-
-        input.addEventListener('paste', (event) => {
-            const digits = (event.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
-            if (!digits) return;
-            event.preventDefault();
-            digits.split('').forEach((digit, i) => { if (otpInputs[i]) otpInputs[i].value = digit; });
-            otpInputs[Math.min(digits.length, 5)].focus();
-        });
-    });
-
-    let otpTimer = null;
-
-    function startOtpTimer(seconds) {
-        const label = document.querySelector('[data-otp-timer]');
-        const resend = document.querySelector('[data-otp-resend]');
-
-        clearInterval(otpTimer);
-        resend?.classList.add('disabled');
-        let remaining = seconds;
-
-        const tick = () => {
-            const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
-            const secs = String(remaining % 60).padStart(2, '0');
-            if (label) label.textContent = `OTP expires in ${minutes}:${secs}`;
-            if (remaining <= 0) {
-                clearInterval(otpTimer);
-                resend?.classList.remove('disabled');
-                if (label) label.textContent = 'OTP expired — request a new code';
-                return;
-            }
-            remaining -= 1;
-        };
-
-        tick();
-        otpTimer = setInterval(tick, 1000);
-    }
-
-    document.querySelector('[data-otp-send]')?.addEventListener('click', async (event) => {
-        event.preventDefault();
+    pincodeInput?.addEventListener('input', async () => {
+        const pin = pincodeInput.value.replace(/\D/g, '').slice(0, 6);
+        pincodeInput.value = pin;
+        if (pin.length !== 6) return;
 
         try {
-            const payload = await LoanPro.request(saveUrls.otpSend, { method: 'POST' });
-            LoanPro.toast(payload.message);
-            startOtpTimer(payload.expires_in ?? 120);
-            otpInputs[0]?.focus();
-
-            if (payload.demo_code) {
-                LoanPro.toast(`Demo mode: use OTP ${payload.demo_code}`, 'info', 'Development');
+            const payload = await LoanPro.request(saveUrls.pincode(pin));
+            if (payload.found) {
+                if (cityInput) cityInput.value = payload.city ?? '';
+                if (stateInput) stateInput.value = payload.state ?? '';
+            } else {
+                LoanPro.toast('Pincode not found — please enter city and state manually.', 'warning');
             }
         } catch (error) {
-            LoanPro.toast(error.message, 'danger');
+            // Lookup is a convenience only; the user can type city and state.
         }
     });
-
-    document.querySelector('[data-otp-verify]')?.addEventListener('click', async (event) => {
-        event.preventDefault();
-        const code = otpValue();
-
-        if (code.length !== 6) {
-            LoanPro.toast('Please enter all 6 digits of the OTP.', 'warning');
-            return;
-        }
-
-        try {
-            const payload = await LoanPro.request(saveUrls.otpVerify, { method: 'POST', body: { otp: code } });
-            LoanPro.toast(payload.message);
-            setTimeout(() => { window.location.href = payload.next_url; }, 700);
-        } catch (error) {
-            LoanPro.toast(error.message, 'danger');
-        }
-    });
-
-    document.querySelector('[data-otp-change-number]')?.addEventListener('click', () => {
-        if (leadId) window.location.href = `/leads/${leadId}/wizard/1`;
-    });
-
-    if (step === 3 && leadId) {
-        startOtpTimer(120);
-    }
 
     /* -------------------------------------------------- lender selection */
 
@@ -292,6 +234,7 @@
             sort: document.getElementById('lender-filter-sort')?.value ?? 'roi',
             direction: document.getElementById('lender-filter-direction')?.value ?? 'asc',
             loan_amount: document.getElementById('loan_amount')?.value ?? {{ (int) ($lead->loan_amount ?? 500000) }},
+            monthly_income: {{ (float) ($lead?->customer?->monthly_income ?? 0) }},
             tenure_months: document.getElementById('tenure_months')?.value ?? {{ (int) ($lead->tenure_months ?? 36) }},
             ...params,
         });

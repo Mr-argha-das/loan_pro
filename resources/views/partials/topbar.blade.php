@@ -35,11 +35,23 @@
             </form>
         @endif
 
-        @canPermission('leads.create')
-            <a href="{{ route('leads.create') }}" class="btn btn-sm btn-primary d-none d-sm-inline-flex">
-                <i class="bi bi-plus-lg"></i> New Lead
-            </a>
-        @endcanPermission
+        <div class="d-none d-md-flex flex-column align-items-end lh-sm px-2" data-live-clock aria-live="off">
+            <span class="fw-semibold small" data-clock-date>{{ now(config('app.timezone'))->format('D, d M Y') }}</span>
+            <span class="text-muted" style="font-size:.75rem" data-clock-time>{{ now(config('app.timezone'))->format('h:i:s A') }}</span>
+        </div>
+        <script>
+            (() => {
+                const box = document.querySelector('[data-live-clock]');
+                if (!box) return;
+                const fmt = () => {
+                    const now = new Date();
+                    box.querySelector('[data-clock-date]').textContent = now.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+                    box.querySelector('[data-clock-time]').textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                };
+                fmt();
+                setInterval(fmt, 1000);
+            })();
+        </script>
 
         <div class="dropdown">
             <button class="btn btn-icon btn-light position-relative" data-notification-bell data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">

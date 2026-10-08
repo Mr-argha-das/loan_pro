@@ -3,150 +3,170 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Finance\StorePaymentRequest;
-use App\Models\Customer;
-use App\Models\Invoice;
-use App\Models\LoanApplication;
-use App\Models\Payment;
-use App\Models\PaymentMethod;
-use App\Services\ExportService;
-use App\Services\PaymentService;
+use App\Http\Requests\Finance\StorePayoutRequest;
+use App\Models\Employee;
+use App\Models\EmployeePayout;
+use App\Services\EmployeePayoutService;
+use App\Services\CodeGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
+/**
+ * Payments module = monthly employee payouts (salary + incentive per approved lead).
+ */
 class PaymentController extends Controller
 {
-    public function __construct(protected PaymentService $payments)
-    {
+    public function __construct(
+        protected EmployeePayoutService $figures,
+        protected CodeGeneratorService $codes,
+    ) {
     }
 
-    public function index(Request $request): View|JsonResponse
+    public function index(Request $request): View
     {
-        $this->authorize('viewAny', Payment::class);
+        abort_unless($request->user()->hasPermissionTo('payments.view'), 403);
 
-        $payments = Payment::query()
-            ->ownedBy($request->user())
-            ->with(['customer', 'invoice', 'paymentMethod', 'receiver'])
-            ->filter($request)
-            ->when($request->filled('customer_id'), fn ($q) => $q->where('customer_id', $request->integer('customer_id')))
-            ->when($request->filled('payment_method_id'), fn ($q) => $q->where('payment_method_id', $request->integer('payment_method_id')))
-            ->when($request->filled('min_amount'), fn ($q) => $q->where('amount', '>=', $request->input('min_amount')))
-            ->orderBy($request->string('sort', 'payment_date')->toString(), $request->string('direction')->toString() === 'asc' ? 'asc' : 'desc')
-            ->paginate($this->perPage($request))
-            ->withQueryString();
+        $month = $this->month($request);
 
-        if ($request->expectsJson()) {
-            return $this->tablePayload($payments, 'finance.payments.partials.table');
-        }
+        $payouts = EmployeePayout::query()
+            ->with('employee.user')
+            ->forMonth($month)
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->when($request->filled('q'), fn ($q) => $q->whereHas('employee.user', fn ($u) => $u->where('name', 'like', '%'.$request->string('q').'%')))
+            ->orderBy('id')
+            ->get();
 
         return view('finance.payments.index', [
-            'payments' => $payments,
-            'stats' => $this->payments->stats(),
-            'methods' => PaymentMethod::query()->active()->ordered()->get(),
-            'customers' => $this->payments->customerOptions(),
+            'month' => $month,
+            'payouts' => $payouts,
+            'totals' => [
+                'employees' => $payouts->count(),
+                'leads' => $payouts->sum('approved_leads'),
+                'coins' => (float) $payouts->sum('total_coins'),
+                'payable' => (float) $payouts->sum('total_amount'),
+                'paid' => (float) $payouts->where('status', 'paid')->sum('total_amount'),
+                'unpaid' => (float) $payouts->where('status', 'unpaid')->sum('total_amount'),
+            ],
+            'employees' => Employee::query()->with('user')->where('employment_status', 'active')->get(),
             'filters' => $request->all(),
         ]);
     }
 
+    /** Figures for one employee and month (used by the create form). */
+    public function summary(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->hasPermissionTo('payments.view'), 403);
+
+        $request->validate([
+            'employee_id' => ['required', 'exists:employees,id'],
+            'payout_month' => ['required', 'date_format:Y-m'],
+        ]);
+
+        $employee = Employee::query()->findOrFail($request->integer('employee_id'));
+        $figures = $this->figures->figures($employee, $request->string('payout_month')->toString());
+
+        return response()->json(['success' => true, 'figures' => $figures]);
+    }
+
     public function create(Request $request): View
     {
-        $this->authorize('create', Payment::class);
+        abort_unless($request->user()->hasPermissionTo('payments.manage'), 403);
 
         return view('finance.payments.form', [
-            'payment' => new Payment(['payment_date' => now()->toDateString(), 'status' => 'completed']),
-            'methods' => PaymentMethod::query()->active()->ordered()->get(),
-            'customers' => $this->payments->customerOptions(),
-            'invoices' => $this->invoiceOptions($request),
+            'payout' => new EmployeePayout(['payout_month' => now()->startOfMonth(), 'status' => 'unpaid']),
+            'employees' => Employee::query()->with('user')->where('employment_status', 'active')->get(),
         ]);
     }
 
-    public function store(StorePaymentRequest $request): RedirectResponse
+    public function store(StorePayoutRequest $request): RedirectResponse
     {
-        $payment = $this->payments->record($request->validated(), $request->user());
+        $data = $request->validated();
+        $employee = Employee::query()->findOrFail($data['employee_id']);
 
-        return redirect()->route('payments.show', $payment)->with('success', 'Payment '.$payment->payment_code.' recorded.');
-    }
+        $exists = EmployeePayout::query()
+            ->where('employee_id', $employee->id)
+            ->forMonth($data['payout_month'])
+            ->exists();
 
-    public function show(Payment $payment): View
-    {
-        $this->authorize('view', $payment);
-
-        return view('finance.payments.show', [
-            'payment' => $payment->load(['customer', 'invoice.items', 'paymentMethod', 'receiver', 'application']),
-        ]);
-    }
-
-    public function edit(Payment $payment): View
-    {
-        $this->authorize('update', $payment);
-
-        return view('finance.payments.form', [
-            'payment' => $payment,
-            'methods' => PaymentMethod::query()->active()->ordered()->get(),
-            'customers' => $this->payments->customerOptions(),
-            'invoices' => $this->invoiceOptions(request()),
-        ]);
-    }
-
-    public function update(StorePaymentRequest $request, Payment $payment): RedirectResponse
-    {
-        $this->authorize('update', $payment);
-
-        $this->payments->update($payment, $request->validated());
-
-        return redirect()->route('payments.show', $payment)->with('success', 'Payment updated.');
-    }
-
-    public function destroy(Payment $payment): RedirectResponse
-    {
-        $this->authorize('delete', $payment);
-
-        $invoice = $payment->invoice;
-        $payment->delete();
-
-        if ($invoice) {
-            $invoice->refresh()->recalculate();
-            $invoice->save();
+        if ($exists) {
+            return back()->withInput()->withErrors([
+                'employee_id' => 'A payout for this employee already exists for that month. Edit it instead.',
+            ]);
         }
 
-        return redirect()->route('payments.index')->with('success', 'Payment deleted.');
+        $payout = DB::transaction(fn () => EmployeePayout::query()->create(
+            $this->payload($employee, $data) + [
+                'payout_code' => $this->codes->payout(),
+                'created_by' => $request->user()->id,
+            ]
+        ));
+
+        return redirect()->route('payments.index', ['month' => $data['payout_month']])
+            ->with('success', 'Payout '.$payout->payout_code.' saved.');
     }
 
-    public function export(Request $request, ExportService $export)
+    public function edit(Request $request, EmployeePayout $payment): View
     {
-        $this->authorize('viewAny', Payment::class);
+        abort_unless($request->user()->hasPermissionTo('payments.manage'), 403);
 
-        $rows = Payment::query()
-            ->ownedBy($request->user())
-            ->with(['customer', 'paymentMethod', 'invoice'])
-            ->filter($request)
-            ->latest('payment_date')
-            ->limit(5000)
-            ->get()
-            ->map(fn (Payment $p) => [
-                $p->payment_code, $p->payment_date?->format('d M Y'), $p->customer?->name,
-                $p->invoice?->invoice_number, $p->amount, $p->paymentMethod?->name,
-                $p->transaction_id, \App\Support\StatusBadge::label($p->status),
-            ]);
-
-        return $export->xlsx('payments-'.now()->format('Ymd-His').'.xlsx', [
-            'Payment ID', 'Date', 'Customer', 'Invoice', 'Amount', 'Method', 'Reference', 'Status',
-        ], $rows, 'Payments', [
-            'Report' => 'Payment Collection Register',
-            'Generated By' => $request->user()->name,
-            'Generated At' => now()->format('d M Y H:i'),
+        return view('finance.payments.form', [
+            'payout' => $payment->load('employee.user'),
+            'employees' => Employee::query()->with('user')->get(),
         ]);
     }
 
-    protected function invoiceOptions(Request $request)
+    public function update(StorePayoutRequest $request, EmployeePayout $payment): RedirectResponse
     {
-        return Invoice::query()->ownedBy($request->user())
-            ->with('customer')
-            ->whereIn('status', ['draft', 'issued', 'partially_paid', 'overdue'])
-            ->latest('invoice_date')
-            ->limit(300)
-            ->get();
+        $data = $request->validated();
+        $employee = Employee::query()->findOrFail($data['employee_id']);
+
+        $payment->update($this->payload($employee, $data));
+
+        return redirect()->route('payments.index', ['month' => $data['payout_month']])
+            ->with('success', 'Payout '.$payment->payout_code.' updated.');
+    }
+
+    public function destroy(Request $request, EmployeePayout $payment): RedirectResponse
+    {
+        abort_unless($request->user()->hasPermissionTo('payments.manage'), 403);
+
+        $month = $payment->payout_month->format('Y-m');
+        $payment->delete();
+
+        return redirect()->route('payments.index', ['month' => $month])->with('success', 'Payout deleted.');
+    }
+
+    /* ------------------------------------------------------------------ helpers */
+
+    protected function month(Request $request): string
+    {
+        $value = $request->string('month')->toString();
+
+        return preg_match('/^\d{4}-\d{2}$/', $value) ? $value : now()->format('Y-m');
+    }
+
+    /** Figures are recomputed on the server so the stored payout can never drift from the data. */
+    protected function payload(Employee $employee, array $data): array
+    {
+        $figures = $this->figures->figures($employee, $data['payout_month']);
+        $incentive = (float) ($data['incentive_amount'] ?? 0);
+
+        return [
+            'employee_id' => $employee->id,
+            'payout_month' => Carbon::createFromFormat('Y-m-d', $data['payout_month'].'-01')->toDateString(),
+            'approved_leads' => $figures['approved_leads'],
+            'coins_per_lead' => $figures['coins_per_lead'],
+            'total_coins' => $figures['total_coins'],
+            'monthly_salary' => $figures['monthly_salary'],
+            'incentive_amount' => $incentive,
+            'total_amount' => round($figures['monthly_salary'] + $incentive, 2),
+            'status' => $data['status'],
+            'paid_on' => $data['status'] === 'paid' ? ($data['paid_on'] ?? now()->toDateString()) : null,
+            'notes' => $data['notes'] ?? null,
+        ];
     }
 }

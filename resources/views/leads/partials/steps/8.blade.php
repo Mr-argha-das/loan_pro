@@ -1,61 +1,109 @@
-<x-section title="Lender Selection" icon="bi-bank" description="Compare partner lenders and pick the products to submit.">
-    @if (! $lead?->is_otp_verified)
-        <div class="alert alert-warning d-flex gap-2 small">
-            <i class="bi bi-exclamation-triangle"></i>
-            <div>Complete OTP verification before selecting lenders.</div>
-        </div>
+<x-section title="Selected Lenders" icon="bi-list-check"
+           description="Fine-tune the amount, ROI and fees for every shortlisted lender before submission.">
+    @if ($selectedLenders->isEmpty())
+        <x-empty-state icon="bi-bank" title="No lenders selected yet" message="Go back to the lender selection step to shortlist products.">
+            <x-slot:action>
+                <a href="{{ route('leads.wizard', ['lead' => $lead, 'step' => 7]) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Select lenders
+                </a>
+            </x-slot:action>
+        </x-empty-state>
+    @else
+        @foreach ($selectedLenders as $index => $selected)
+            <div class="lp-card mb-3">
+                <div class="lp-card__header">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="lp-lender-card__logo">{{ $selected->lender?->code ?? '—' }}</span>
+                        <div>
+                            <div class="fw-semibold">{{ $selected->lender?->name }}</div>
+                            <div class="text-muted" style="font-size:.75rem">{{ $selected->lenderProduct?->product_name }}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        @if ($selected->is_primary)
+                            <span class="lp-badge bg-success-subtle text-success bg-opacity-10"><i class="bi bi-star-fill"></i> Primary</span>
+                        @endif
+                        <button type="button" class="btn btn-sm btn-light text-danger" data-bs-toggle="collapse" data-bs-target="#lender-edit-{{ $selected->id }}">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                    </div>
+                </div>
+
+                <div class="lp-card__body">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-2"><div class="lp-lender-metric">Loan amount<strong>{{ \App\Support\Format::money($selected->loan_amount) }}</strong></div></div>
+                        <div class="col-6 col-md-2"><div class="lp-lender-metric">ROI<strong>{{ $selected->roi }}%</strong></div></div>
+                        <div class="col-6 col-md-2"><div class="lp-lender-metric">APR<strong>{{ $selected->apr ?? '—' }}%</strong></div></div>
+                        <div class="col-6 col-md-2"><div class="lp-lender-metric">EMI<strong>{{ \App\Support\Format::money($selected->emi) }}</strong></div></div>
+                        <div class="col-6 col-md-2"><div class="lp-lender-metric">Tenure<strong>{{ $selected->tenure_months }} months</strong></div></div>
+                        <div class="col-6 col-md-2"><div class="lp-lender-metric">Processing fee<strong>{{ \App\Support\Format::money($selected->processing_fee) }}</strong></div></div>
+                    </div>
+
+                    <div class="collapse mt-3" id="lender-edit-{{ $selected->id }}">
+                        <div class="lp-divider my-2"></div>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label" for="amount-{{ $selected->id }}">Loan amount</label>
+                                <input type="number" class="form-control" id="amount-{{ $selected->id }}"
+                                       name="lenders[{{ $index }}][loan_amount]" value="{{ (float) $selected->loan_amount }}" step="1000">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" for="roi-{{ $selected->id }}">ROI %</label>
+                                <input type="number" class="form-control" id="roi-{{ $selected->id }}"
+                                       name="lenders[{{ $index }}][roi]" value="{{ $selected->roi }}" step="0.01">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" for="tenure-{{ $selected->id }}">Tenure (months)</label>
+                                <input type="number" class="form-control" id="tenure-{{ $selected->id }}"
+                                       name="lenders[{{ $index }}][tenure_months]" value="{{ $selected->tenure_months }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" for="fee-{{ $selected->id }}">Processing fee</label>
+                                <input type="number" class="form-control" id="fee-{{ $selected->id }}"
+                                       name="lenders[{{ $index }}][processing_fee]" value="{{ (float) $selected->processing_fee }}" step="100">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="penal-{{ $selected->id }}">Penal charge %</label>
+                                <input type="number" class="form-control" id="penal-{{ $selected->id }}"
+                                       name="lenders[{{ $index }}][penal_charge]" value="{{ $selected->penal_charge }}" step="0.01">
+                            </div>
+                        </div>
+
+                        @if (! empty($selected->required_documents))
+                            <div class="mt-3">
+                                <div class="fw-semibold small mb-1">Required documents</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach ((array) $selected->required_documents as $document)
+                                        <span class="lp-badge bg-primary-subtle text-primary bg-opacity-10">{{ $document }}</span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
+                        <input type="hidden" name="lenders[{{ $index }}][lender_id]" value="{{ $selected->lender_id }}">
+                        <input type="hidden" name="lenders[{{ $index }}][lender_product_id]" value="{{ $selected->lender_product_id }}">
+                    </div>
+                </div>
+            </div>
+        @endforeach
     @endif
+</x-section>
 
-    <div class="row g-2 mb-3">
-        <div class="col-md-3">
-            <label class="form-label" for="lender-filter-search">Search lender</label>
-            <input type="search" class="form-control" id="lender-filter-search" data-lender-filter placeholder="Bank or product name">
+<x-section title="KYC Documents" icon="bi-folder-check" description="Documents uploaded for this customer, shown alongside the lenders they will be sent to.">
+    @php $kycDocs = $lead?->documents ?? collect(); @endphp
+    @forelse ($kycDocs as $document)
+        <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+            <span class="lp-tone-primary rounded-3 d-grid flex-shrink-0" style="width:36px;height:36px;place-items:center"><i class="bi bi-file-earmark-text"></i></span>
+            <div class="flex-grow-1">
+                <div class="fw-semibold" style="font-size:.85rem">{{ $document->documentType?->name ?? 'Document' }}</div>
+                <div class="text-muted" style="font-size:.73rem">{{ $document->original_name }}@if ($document->issued_number) &middot; No. {{ $document->issued_number }}@endif</div>
+            </div>
+            <x-status-badge :status="$document->status" />
+            <a href="{{ route('documents.preview', $document) }}" target="_blank" rel="noopener" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a>
         </div>
-        <div class="col-md-2">
-            <label class="form-label" for="lender-filter-type">Loan type</label>
-            <select class="form-select" id="lender-filter-type" data-lender-filter>
-                <option value="">All types</option>
-                <option value="secured">Secured</option>
-                <option value="unsecured">Unsecured</option>
-                <option value="insurance">Insurance</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label" for="lender-filter-category">Category</label>
-            <select class="form-select" id="lender-filter-category" data-lender-filter>
-                <option value="">All categories</option>
-                @foreach ($categories as $category)
-                    <option value="{{ $category->id }}" @selected($lead?->product_category_id == $category->id)>{{ $category->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label" for="lender-filter-sort">Sort by</label>
-            <select class="form-select" id="lender-filter-sort" data-lender-filter>
-                <option value="roi">ROI</option>
-                <option value="emi">EMI</option>
-                <option value="amount">Max amount</option>
-                <option value="tenure">Max tenure</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label" for="lender-filter-direction">Order</label>
-            <select class="form-select" id="lender-filter-direction" data-lender-filter>
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-            </select>
-        </div>
-        <div class="col-md-1 d-flex align-items-end">
-            <span class="lp-badge bg-primary-subtle text-primary bg-opacity-10 w-100 justify-content-center" id="lender-count" title="Lenders matching your filters">0</span>
-        </div>
-        <div class="col-md-1 d-flex align-items-end">
-            <span class="lp-badge bg-success-subtle text-success bg-opacity-10 w-100 justify-content-center" title="Shortlisted so far"><i class="bi bi-check2"></i> <span id="lender-selected-count">{{ $selectedLenders?->count() ?? 0 }}</span></span>
-        </div>
-    </div>
-
-    <div class="row g-3" id="lender-results"></div>
-
-    <div id="lender-hidden-inputs"></div>
+    @empty
+        <x-empty-state icon="bi-folder2-open" title="No KYC documents yet" message="Go back to the KYC & Documents step to upload them." />
+    @endforelse
 </x-section>
 
 <div class="d-flex justify-content-between">

@@ -110,12 +110,6 @@
             </a>
         @endif
 
-        @if ($user->hasPermissionTo('documents.upload'))
-            <a href="{{ route('documents.index') }}" class="lp-nav__link {{ $is(['documents.']) ? 'active' : '' }}">
-                <i class="bi bi-folder2-open"></i><span class="lp-nav__label">Documents</span>
-            </a>
-        @endif
-
         @if ($user->hasPermissionTo('attendance.view') || $user->hasPermissionTo('attendance.mark'))
             <div class="lp-nav__section">Workplace</div>
 

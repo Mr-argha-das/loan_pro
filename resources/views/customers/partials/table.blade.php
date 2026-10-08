@@ -9,9 +9,9 @@
                 <th scope="col">City</th>
                 <th scope="col">Employment</th>
                 <x-sortable-th column="monthly_income" label="Monthly income" />
-                <th scope="col">KYC</th>
                 <th scope="col">Relationship</th>
-                <th scope="col">Leads / Apps</th>
+                <th scope="col">Lead status</th>
+                <th scope="col">Closed</th>
                 <x-sortable-th column="created_at" label="Added" />
                 <th scope="col" class="text-end">Actions</th>
             </tr>
@@ -38,11 +38,17 @@
                         <div class="text-muted" style="font-size:.73rem">{{ $customer->company_name ?? '' }}</div>
                     </td>
                     <td class="fw-semibold">{{ \App\Support\Format::money($customer->monthly_income) }}</td>
-                    <td><x-status-badge :status="$customer->kyc_status" /></td>
                     <td>{{ $customer->assignedEmployee?->name ?? 'Unassigned' }}</td>
                     <td>
-                        <span class="lp-badge bg-primary-subtle text-primary bg-opacity-10">{{ (int) ($customer->leads_count ?? $customer->leads->count()) }}</span>
-                        <span class="lp-badge bg-secondary-subtle text-secondary bg-opacity-10">{{ (int) ($customer->applications_count ?? $customer->applications->count()) }}</span>
+                        @if ($customer->latestLead)
+                            <x-status-badge :status="$customer->latestLead->status" :label="$customer->latestLead->leadStatus?->name" />
+                            <div class="text-muted" style="font-size:.7rem">{{ $customer->latestLead->lead_code }}</div>
+                        @else
+                            <span class="text-muted small">No lead</span>
+                        @endif
+                    </td>
+                    <td class="text-muted text-nowrap">
+                        {{ optional($customer->latestLead?->statusHistories->last()?->created_at)->format('d M Y') ?? '—' }}
                     </td>
                     <td class="text-muted text-nowrap">{{ $customer->created_at?->format('d M Y') }}</td>
                     <td class="text-end">
@@ -51,12 +57,8 @@
                             @can('update', $customer)
                                 <a href="{{ route('customers.edit', $customer) }}" class="btn btn-sm btn-light" title="Edit" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>
                             @endcan
-                            @canPermission('leads.create')
-                                <a href="{{ route('leads.create', ['customer_id' => $customer->id]) }}" class="btn btn-sm btn-light" title="Create lead" data-bs-toggle="tooltip"><i class="bi bi-plus-circle"></i></a>
-                            @endcanPermission
                             <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ route('customers.show', $customer) }}"><i class="bi bi-person-lines-fill me-2"></i>Open CRM profile</a></li>
                                 <li><a class="dropdown-item" href="{{ route('customers.show', $customer) }}#documents"><i class="bi bi-folder-check me-2"></i>Documents</a></li>
                                 <li><a class="dropdown-item" href="{{ route('customers.show', $customer) }}#payments"><i class="bi bi-cash-stack me-2"></i>Payments</a></li>
                                 @can('delete', $customer)

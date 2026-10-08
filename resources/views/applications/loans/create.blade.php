@@ -38,7 +38,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4"><x-empty-state icon="bi-funnel" title="No verified leads waiting" message="Verify a lead via OTP to convert it into an application." /></td></tr>
+                                <tr><td colspan="4"><x-empty-state icon="bi-funnel" title="No verified leads waiting" message="Mark a lead as verified to convert it into an application." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -49,7 +49,7 @@
         <div class="col-lg-5">
             <x-card title="How conversion works" icon="bi-info-circle">
                 <ol class="small text-muted mb-0 ps-3">
-                    <li class="mb-2">A lead must be <strong>OTP verified</strong> with at least one lender shortlisted.</li>
+                    <li class="mb-2">A lead must be <strong>verified</strong> with at least one lender shortlisted.</li>
                     <li class="mb-2">Converting creates the application, copies the customer snapshot and links shortlisted lenders.</li>
                     <li>Status history starts at <strong>Application Created</strong> and is never overwritten.</li>
                 </ol>

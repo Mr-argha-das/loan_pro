@@ -1,98 +1,91 @@
-<x-section title="Selected Lenders" icon="bi-list-check"
-           description="Fine-tune the amount, ROI and fees for every shortlisted lender before submission.">
-    @if ($selectedLenders->isEmpty())
-        <x-empty-state icon="bi-bank" title="No lenders selected yet" message="Go back to the lender selection step to shortlist products.">
-            <x-slot:action>
-                <a href="{{ route('leads.wizard', ['lead' => $lead, 'step' => 8]) }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-arrow-left"></i> Select lenders
-                </a>
-            </x-slot:action>
-        </x-empty-state>
-    @else
-        @foreach ($selectedLenders as $index => $selected)
-            <div class="lp-card mb-3">
-                <div class="lp-card__header">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="lp-lender-card__logo">{{ $selected->lender?->code ?? '—' }}</span>
-                        <div>
-                            <div class="fw-semibold">{{ $selected->lender?->name }}</div>
-                            <div class="text-muted" style="font-size:.75rem">{{ $selected->lenderProduct?->product_name }}</div>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        @if ($selected->is_primary)
-                            <span class="lp-badge bg-success-subtle text-success bg-opacity-10"><i class="bi bi-star-fill"></i> Primary</span>
-                        @endif
-                        <button type="button" class="btn btn-sm btn-light text-danger" data-bs-toggle="collapse" data-bs-target="#lender-edit-{{ $selected->id }}">
-                            <i class="bi bi-pencil"></i> Edit
-                        </button>
-                    </div>
-                </div>
+@php
+    $customer = $lead->customer;
+    $primary = $selectedLenders->firstWhere('is_primary', true) ?? $selectedLenders->first();
+@endphp
 
-                <div class="lp-card__body">
-                    <div class="row g-3">
-                        <div class="col-6 col-md-2"><div class="lp-lender-metric">Loan amount<strong>{{ \App\Support\Format::money($selected->loan_amount) }}</strong></div></div>
-                        <div class="col-6 col-md-2"><div class="lp-lender-metric">ROI<strong>{{ $selected->roi }}%</strong></div></div>
-                        <div class="col-6 col-md-2"><div class="lp-lender-metric">APR<strong>{{ $selected->apr ?? '—' }}%</strong></div></div>
-                        <div class="col-6 col-md-2"><div class="lp-lender-metric">EMI<strong>{{ \App\Support\Format::money($selected->emi) }}</strong></div></div>
-                        <div class="col-6 col-md-2"><div class="lp-lender-metric">Tenure<strong>{{ $selected->tenure_months }} months</strong></div></div>
-                        <div class="col-6 col-md-2"><div class="lp-lender-metric">Processing fee<strong>{{ \App\Support\Format::money($selected->processing_fee) }}</strong></div></div>
-                    </div>
-
-                    <div class="collapse mt-3" id="lender-edit-{{ $selected->id }}">
-                        <div class="lp-divider my-2"></div>
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label" for="amount-{{ $selected->id }}">Loan amount</label>
-                                <input type="number" class="form-control" id="amount-{{ $selected->id }}"
-                                       name="lenders[{{ $index }}][loan_amount]" value="{{ (float) $selected->loan_amount }}" step="1000">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label" for="roi-{{ $selected->id }}">ROI %</label>
-                                <input type="number" class="form-control" id="roi-{{ $selected->id }}"
-                                       name="lenders[{{ $index }}][roi]" value="{{ $selected->roi }}" step="0.01">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label" for="tenure-{{ $selected->id }}">Tenure (months)</label>
-                                <input type="number" class="form-control" id="tenure-{{ $selected->id }}"
-                                       name="lenders[{{ $index }}][tenure_months]" value="{{ $selected->tenure_months }}">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label" for="fee-{{ $selected->id }}">Processing fee</label>
-                                <input type="number" class="form-control" id="fee-{{ $selected->id }}"
-                                       name="lenders[{{ $index }}][processing_fee]" value="{{ (float) $selected->processing_fee }}" step="100">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label" for="penal-{{ $selected->id }}">Penal charge %</label>
-                                <input type="number" class="form-control" id="penal-{{ $selected->id }}"
-                                       name="lenders[{{ $index }}][penal_charge]" value="{{ $selected->penal_charge }}" step="0.01">
-                            </div>
-                        </div>
-
-                        @if (! empty($selected->required_documents))
-                            <div class="mt-3">
-                                <div class="fw-semibold small mb-1">Required documents</div>
-                                <div class="d-flex flex-wrap gap-1">
-                                    @foreach ((array) $selected->required_documents as $document)
-                                        <span class="lp-badge bg-primary-subtle text-primary bg-opacity-10">{{ $document }}</span>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-
-                        <input type="hidden" name="lenders[{{ $index }}][lender_id]" value="{{ $selected->lender_id }}">
-                        <input type="hidden" name="lenders[{{ $index }}][lender_product_id]" value="{{ $selected->lender_product_id }}">
-                    </div>
+<x-section title="Lead Summary" icon="bi-clipboard-check" description="Review everything captured, then save the lead.">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="fw-semibold mb-3"><i class="bi bi-person me-1 text-primary"></i> Customer</div>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="lp-avatar lp-avatar--lg">{{ $customer?->initials() }}</span>
+                <div>
+                    <div class="fw-semibold">{{ $customer?->name }}</div>
+                    <div class="text-muted small">{{ $customer?->mobile }} &middot; {{ $customer?->email ?? 'No email' }}</div>
                 </div>
             </div>
-        @endforeach
-    @endif
+
+            <div class="lp-kv"><span class="lp-kv__label">Lead ID</span><span class="lp-kv__value">{{ $lead->lead_code }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Date of birth</span><span class="lp-kv__value">{{ $customer?->date_of_birth?->format('d M Y') ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">PAN</span><span class="lp-kv__value">{{ $customer?->pan_number ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Aadhaar</span><span class="lp-kv__value">{{ $customer?->aadhaar_number ? 'XXXX XXXX '.substr($customer->aadhaar_number, -4) : '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Address</span><span class="lp-kv__value">{{ collect([$customer?->address, $customer?->city, $customer?->pincode])->filter()->implode(', ') ?: '—' }}</span></div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="fw-semibold mb-3"><i class="bi bi-briefcase me-1 text-primary"></i> Employment &amp; income</div>
+            <div class="lp-kv"><span class="lp-kv__label">Employment type</span><span class="lp-kv__value">{{ $customer?->employmentType?->name ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Employer</span><span class="lp-kv__value">{{ $customer?->company_name ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Designation</span><span class="lp-kv__value">{{ $customer?->designation ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Monthly income</span><span class="lp-kv__value">{{ \App\Support\Format::money($customer?->monthly_income) }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Existing EMI</span><span class="lp-kv__value">{{ \App\Support\Format::money($lead->existing_emi) }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Credit score</span><span class="lp-kv__value">{{ $lead->credit_score ?? '—' }}</span></div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="fw-semibold mb-3"><i class="bi bi-cash-coin me-1 text-primary"></i> Requirement</div>
+            <div class="lp-kv"><span class="lp-kv__label">Product</span><span class="lp-kv__value">{{ $lead->product?->name ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Category</span><span class="lp-kv__value">{{ $lead->category?->name ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Purpose</span><span class="lp-kv__value">{{ $lead->subcategory?->name ?? '—' }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Amount</span><span class="lp-kv__value">{{ \App\Support\Format::money($lead->loan_amount) }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Tenure</span><span class="lp-kv__value">{{ \App\Support\Format::tenure($lead->tenure_months) }}</span></div>
+            <div class="lp-kv"><span class="lp-kv__label">Indicative EMI</span><span class="lp-kv__value">{{ $primary?->emi ? \App\Support\Format::money($primary->emi) : '—' }}</span></div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="fw-semibold mb-3"><i class="bi bi-bank me-1 text-primary"></i> Shortlisted lenders ({{ $selectedLenders->count() }})</div>
+            @forelse ($selectedLenders as $lender)
+                <div class="d-flex align-items-center gap-2 py-2 border-bottom">
+                    <span class="lp-lender-card__logo" style="width:34px;height:34px;font-size:.7rem">{{ $lender->lender?->code }}</span>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold" style="font-size:.85rem">{{ $lender->lender?->name }}</div>
+                        <div class="text-muted" style="font-size:.73rem">
+                            ROI {{ $lender->roi }}% &middot; EMI {{ \App\Support\Format::money($lender->emi) }} &middot; Fee {{ \App\Support\Format::money($lender->processing_fee) }}
+                        </div>
+                    </div>
+                    @if ($lender->is_primary)<span class="lp-badge bg-success-subtle text-success bg-opacity-10">Primary</span>@endif
+                </div>
+            @empty
+                <div class="text-muted small">No lenders shortlisted. You can still create the application and add lenders later.</div>
+            @endforelse
+
+            <div class="mt-3">
+                <div class="fw-semibold mb-2"><i class="bi bi-folder-check me-1 text-primary"></i> Uploaded documents</div>
+                @forelse ($lead->documents as $document)
+                    <div class="d-flex align-items-center justify-content-between gap-2 py-1 border-bottom">
+                        <div>
+                            <div class="fw-semibold" style="font-size:.85rem">{{ $document->documentType?->name ?? 'Document' }}</div>
+                            <div class="text-muted" style="font-size:.73rem">{{ $document->original_name }}</div>
+                        </div>
+                        <x-status-badge :status="$document->status" />
+                    </div>
+                @empty
+                    <div class="text-muted small">No documents uploaded.</div>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="col-12">
+            <x-textarea name="notes" label="Internal remarks" rows="3" :value="$lead->notes"
+                        placeholder="Anything the credit team should know about this lead." />
+        </div>
+    </div>
 </x-section>
 
-<div class="d-flex justify-content-between">
+<div class="d-flex flex-wrap justify-content-between gap-2">
     <button type="button" class="btn btn-outline-secondary" data-wizard-back><i class="bi bi-arrow-left"></i> Back</button>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-light" data-save-draft><i class="bi bi-save"></i> Save as Draft</button>
-        <button type="submit" class="btn btn-primary">Save &amp; Continue <i class="bi bi-arrow-right"></i></button>
+        <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Save Lead</button>
     </div>
 </div>

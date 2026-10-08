@@ -19,6 +19,9 @@ class UpdateLeadStepRequest extends FormRequest
     public function rules(): array
     {
         $step = (int) $this->route('step', 1);
+        // Required business fields are enforced on "Save & Continue" only;
+        // "Save as Draft" may be stored partially filled.
+        $required = $this->boolean('is_draft') ? 'nullable' : 'required';
 
         return match ($step) {
             1 => [
@@ -29,7 +32,7 @@ class UpdateLeadStepRequest extends FormRequest
             2 => [
                 'lead_source_id' => ['nullable', 'exists:lead_sources,id'],
                 'product_id' => ['required', 'exists:products,id'],
-                'product_category_id' => ['nullable', 'exists:product_categories,id'],
+                'product_category_id' => [$required, 'exists:product_categories,id'],
                 'product_subcategory_id' => ['nullable', 'exists:product_subcategories,id'],
                 'assigned_to' => ['nullable', 'exists:users,id'],
                 'priority' => ['nullable', 'integer', 'between:1,3'],
@@ -39,9 +42,6 @@ class UpdateLeadStepRequest extends FormRequest
                 'customer_type' => ['nullable', Rule::in(['new', 'existing'])],
             ],
             3 => [
-                'otp' => ['nullable', 'digits:6'],
-            ],
-            4 => [
                 'date_of_birth' => ['nullable', 'date', 'before:today'],
                 'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
                 'marital_status' => ['nullable', Rule::in(['single', 'married', 'divorced', 'widowed'])],
@@ -54,17 +54,17 @@ class UpdateLeadStepRequest extends FormRequest
                 'pincode' => ['nullable', 'digits:6'],
                 'address' => ['nullable', 'string', 'max:255'],
             ],
-            5 => [
+            4 => [
                 'employment_type_id' => ['nullable', 'exists:employment_types,id'],
                 'company_name' => ['nullable', 'string', 'max:150'],
                 'designation' => ['nullable', 'string', 'max:100'],
-                'monthly_income' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
+                'monthly_income' => [$required, 'numeric', 'min:1', 'max:100000000'],
                 'annual_income' => ['nullable', 'numeric', 'min:0'],
                 'work_experience_years' => ['nullable', 'integer', 'between:0,60'],
                 'office_address' => ['nullable', 'string', 'max:255'],
                 'existing_emi' => ['nullable', 'numeric', 'min:0'],
             ],
-            6 => [
+            5 => [
                 // Documents are optional at this step ("upload what you already have");
                 // rows without a file are ignored by the controller.
                 'documents' => ['nullable', 'array'],
@@ -73,15 +73,13 @@ class UpdateLeadStepRequest extends FormRequest
                 'documents.*.issued_number' => ['nullable', 'string', 'max:60'],
                 'documents.*.expires_at' => ['nullable', 'date'],
             ],
-            7 => [
+            6 => [
                 'loan_amount' => ['required', 'numeric', 'min:1000', 'max:200000000'],
                 'tenure_months' => ['required', 'integer', 'between:3,480'],
-                'credit_score' => ['nullable', 'integer', 'between:300,900'],
-                'preferred_bank' => ['nullable', 'string', 'max:100'],
-                'product_category_id' => ['nullable', 'exists:product_categories,id'],
+                'product_category_id' => [$required, 'exists:product_categories,id'],
                 'product_subcategory_id' => ['nullable', 'exists:product_subcategories,id'],
             ],
-            8, 9 => [
+            7, 8 => [
                 'lenders' => ['nullable', 'array'],
                 'lenders.*.lender_id' => ['required_with:lenders', 'exists:lenders,id'],
                 'lenders.*.lender_product_id' => ['nullable', 'exists:lender_products,id'],
@@ -92,7 +90,7 @@ class UpdateLeadStepRequest extends FormRequest
                 'lenders.*.penal_charge' => ['nullable', 'numeric', 'min:0'],
                 'lenders.*.required_documents' => ['nullable', 'array'],
             ],
-            10 => [
+            9 => [
                 'notes' => ['nullable', 'string', 'max:2000'],
                 'is_draft' => ['nullable', 'boolean'],
             ],

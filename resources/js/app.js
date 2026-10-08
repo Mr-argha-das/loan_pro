@@ -328,6 +328,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // A form (or a submit button inside it) guarded by data-confirm: submit it now.
+        // requestSubmit() fires a submit event, not a click, so the guard does not loop.
+        if (trigger.tagName === 'FORM') {
+            trigger.requestSubmit();
+            return;
+        }
+
+        if (trigger.tagName === 'BUTTON' && trigger.form) {
+            trigger.form.requestSubmit(trigger);
+            return;
+        }
+
         if (trigger.tagName === 'A' && trigger.href) {
             window.location.href = trigger.href;
             return;

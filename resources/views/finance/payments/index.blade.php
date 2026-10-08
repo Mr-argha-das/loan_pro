@@ -1,79 +1,102 @@
 @extends('layouts.app')
 
-@section('title', 'Payment Management')
+@section('title', 'Payments')
 @section('page-header', true)
-@section('page-title', 'Payment Management')
-@section('page-subtitle', 'Collections across cash, bank transfer, UPI, card and cheque.')
-
-@section('breadcrumb')
-    <li class="breadcrumb-item active" aria-current="page">Payments</li>
-@endsection
+@section('page-title', 'Employee Payments')
+@section('page-subtitle', 'Monthly salary and incentive per employee, based on approved leads.')
 
 @section('page-actions')
-    <div class="d-flex gap-2">
-        @can('export', App\Models\Payment::class)
-            <a href="{{ route('payments.export', request()->query()) }}" class="btn btn-light btn-sm"><i class="bi bi-file-earmark-excel"></i> Export</a>
-        @endcan
-        @can('create', App\Models\Payment::class)
-            <a href="{{ route('payments.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Record Payment</a>
-        @endcan
-    </div>
+    @canPermission('payments.manage')
+        <a href="{{ route('payments.create', ['month' => $month]) }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add payment</a>
+    @endcanPermission
 @endsection
 
 @section('content')
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3"><x-stat-card label="Collected today" :value="\App\Support\Format::compactInr($stats['today'] ?? 0)" icon="bi-calendar-check" tone="primary" /></div>
-        <div class="col-6 col-lg-3"><x-stat-card label="This month" :value="\App\Support\Format::compactInr($stats['month'] ?? 0)" icon="bi-graph-up-arrow" tone="blue" /></div>
-        <div class="col-6 col-lg-3"><x-stat-card label="Lifetime collections" :value="\App\Support\Format::compactInr($stats['total'] ?? 0)" icon="bi-cash-stack" tone="green" /></div>
-        <div class="col-6 col-lg-3"><x-stat-card label="Payments recorded" :value="number_format($payments->total())" icon="bi-receipt" tone="orange" /></div>
-    </div>
-
-    <x-filter-panel :action="route('payments.index')" :reset-url="route('payments.index')">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label" for="q">Search</label>
-                <x-search-box name="q" :value="$filters['q'] ?? null" placeholder="Reference, transaction or customer" />
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="status">Status</label>
-                <select class="form-select" id="status" name="status">
-                    <option value="">All statuses</option>
-                    @foreach (['pending' => 'Pending', 'completed' => 'Completed', 'failed' => 'Failed', 'refunded' => 'Refunded'] as $value => $label)
-                        <option value="{{ $value }}" @selected(($filters['status'] ?? null) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="payment_method_id">Mode</label>
-                <select class="form-select" id="payment_method_id" name="payment_method_id">
-                    <option value="">All modes</option>
-                    @foreach ($methods as $method)
-                        <option value="{{ $method->id }}" @selected((int) ($filters['payment_method_id'] ?? 0) === $method->id)>{{ $method->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2"><label class="form-label" for="from_date">From</label><input type="date" class="form-control" id="from_date" name="from_date" value="{{ $filters['from_date'] ?? '' }}"></div>
-            <div class="col-md-2"><label class="form-label" for="to_date">To</label><input type="date" class="form-control" id="to_date" name="to_date" value="{{ $filters['to_date'] ?? '' }}"></div>
-            <div class="col-md-1">
-                <label class="form-label" for="per_page">Rows</label>
-                <select class="form-select" id="per_page" name="per_page">
-                    @foreach (config('loanpro.pagination.options', [10, 25, 50, 100]) as $option)
-                        <option value="{{ $option }}" @selected((int) ($filters['per_page'] ?? 25) === $option)>{{ $option }}</option>
-                    @endforeach
-                </select>
+    <form method="GET" action="{{ route('payments.index') }}" class="lp-card mb-4">
+        <div class="lp-card__body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label" for="month">Month</label>
+                    <input type="month" class="form-control" id="month" name="month" value="{{ $month }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="status">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All statuses</option>
+                        @foreach (\App\Models\EmployeePayout::STATUSES as $value => $label)
+                            <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="q">Employee</label>
+                    <input type="search" class="form-control" id="q" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search employee name">
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-primary w-100">Apply</button>
+                    <a href="{{ route('payments.index') }}" class="btn btn-light">Reset</a>
+                </div>
             </div>
         </div>
-    </x-filter-panel>
+    </form>
 
-    <x-card :padding="false">
-        <div id="payment-table-body">
-            @include('finance.payments.partials.table', ['items' => $payments])
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-2"><x-stat-card label="Employees" :value="$totals['employees']" icon="bi-people" tone="primary" meta="in {{ \Illuminate\Support\Carbon::createFromFormat('Y-m', $month)->format('M Y') }}" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Approved leads" :value="$totals['leads']" icon="bi-patch-check" tone="info" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Total coins" :value="number_format($totals['coins'], 2)" icon="bi-coin" tone="warning" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Total payable" :value="\App\Support\Format::money($totals['payable'])" icon="bi-wallet2" tone="primary" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Paid" :value="\App\Support\Format::money($totals['paid'])" icon="bi-check2-circle" tone="success" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Unpaid" :value="\App\Support\Format::money($totals['unpaid'])" icon="bi-exclamation-circle" tone="danger" /></div>
+    </div>
+
+    <x-card title="Payments" icon="bi-wallet2" :subtitle="'Figures for '.\Illuminate\Support\Carbon::createFromFormat('Y-m', $month)->format('F Y')" padding="false">
+        <div class="table-responsive">
+            <table class="lp-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Employee</th>
+                        <th scope="col">Total leads</th>
+                        <th scope="col">Total coins</th>
+                        <th scope="col">Monthly salary</th>
+                        <th scope="col">Incentive</th>
+                        <th scope="col">Total amount</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($payouts as $payout)
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ $payout->employee?->user?->name ?? 'Employee' }}</div>
+                                <div class="text-muted" style="font-size:.73rem">{{ $payout->payout_code }}</div>
+                            </td>
+                            <td>{{ $payout->approved_leads }}</td>
+                            <td>{{ number_format((float) $payout->total_coins, 2) }}<div class="text-muted" style="font-size:.73rem">{{ number_format((float) $payout->coins_per_lead, 2) }} per lead</div></td>
+                            <td>{{ \App\Support\Format::money($payout->monthly_salary) }}</td>
+                            <td>{{ \App\Support\Format::money($payout->incentive_amount) }}</td>
+                            <td class="fw-semibold">{{ \App\Support\Format::money($payout->total_amount) }}</td>
+                            <td>
+                                <span class="lp-badge bg-{{ $payout->isPaid() ? 'success' : 'warning' }}-subtle text-{{ $payout->isPaid() ? 'success' : 'warning' }} bg-opacity-10">
+                                    {{ \App\Models\EmployeePayout::STATUSES[$payout->status] ?? $payout->status }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                @canPermission('payments.manage')
+                                    <a href="{{ route('payments.edit', $payout) }}" class="btn btn-sm btn-light" aria-label="Edit"><i class="bi bi-pencil"></i></a>
+                                    <form method="POST" action="{{ route('payments.destroy', $payout) }}" class="d-inline"
+                                          data-confirm="Delete payout {{ $payout->payout_code }}?">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-sm btn-light text-danger" aria-label="Delete"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                @endcanPermission
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="8"><x-empty-state icon="bi-wallet2" title="No payouts for this month" message="Add a payment to record an employee's salary and incentive." /></td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </x-card>
 @endsection
-
-@push('scripts')
-<script type="module">
-    LoanPro.bindTableFilters({ url: '{{ route('payments.index') }}', container: '#payment-table-body' });
-</script>
-@endpush

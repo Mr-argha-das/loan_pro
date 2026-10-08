@@ -14,13 +14,21 @@
 
         <div class="col-md-4">
             <x-select name="product_id" label="Product" required :options="$products" :value="$lead?->product_id"
-                      placeholder="Select product" help="Loans, Insurance, Cards or Real Estate — all database driven." />
+                      placeholder="Select product" help="Choose Loans or Insurance — the matching categories open below." data-product-select />
         </div>
         <div class="col-md-4">
-            <x-select name="product_category_id" label="Category" :options="$categories" :value="$lead?->product_category_id" placeholder="Select category" />
+            <label class="form-label" for="product_category_id">Category<span class="req" aria-hidden="true">*</span></label>
+            <select class="form-select" id="product_category_id" name="product_category_id" required data-category-select>
+                <option value="">Select category</option>
+                @foreach ($allCategories as $category)
+                    <option value="{{ $category->id }}" data-product="{{ $category->product_id }}" @selected(($lead?->product_category_id ?? old('product_category_id')) == $category->id)>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label" for="product_subcategory_id">Purpose / Plan</label>
+            <label class="form-label" for="product_subcategory_id">Purpose / Sub category</label>
             <select class="form-select" id="product_subcategory_id" name="product_subcategory_id">
                 <option value="">Select purpose</option>
                 @foreach ($subcategories as $subcategory)
@@ -41,9 +49,6 @@
             <x-select name="preferred_contact_time" label="Best time to call"
                       :options="['Morning (9-12)' => 'Morning (9 AM - 12 PM)', 'Afternoon (12-4)' => 'Afternoon (12 PM - 4 PM)', 'Evening (4-8)' => 'Evening (4 PM - 8 PM)']"
                       :value="$lead?->preferred_contact_time" placeholder="Select time slot" />
-        </div>
-        <div class="col-md-4">
-            <x-input name="preferred_bank" label="Preferred lender" :value="$lead?->preferred_bank" placeholder="Any / specific bank" />
         </div>
     </div>
 </x-section>

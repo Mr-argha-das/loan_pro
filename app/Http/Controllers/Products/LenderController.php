@@ -58,6 +58,9 @@ class LenderController extends Controller
 
         $amount = (float) $request->input('loan_amount', 500000);
         $tenure = (int) $request->input('tenure_months', 36);
+        // Monthly income of the customer on the lead. Only banks whose income band
+        // (min_monthly_income .. max_monthly_income) contains it are offered.
+        $income = (float) $request->input('monthly_income', 0);
 
         $query = LenderProduct::query()
             ->with(['lender', 'category'])
@@ -71,6 +74,9 @@ class LenderController extends Controller
                 $q->where(fn ($sub) => $sub->where('product_name', 'like', "%{$term}%")
                     ->orWhereHas('lender', fn ($l) => $l->where('name', 'like', "%{$term}%")));
             })
+            ->when($income > 0, fn ($q) => $q
+                ->where(fn ($band) => $band->whereNull('min_monthly_income')->orWhere('min_monthly_income', '<=', $income))
+                ->where(fn ($band) => $band->whereNull('max_monthly_income')->orWhere('max_monthly_income', '>=', $income)))
             ->when($request->filled('min_amount'), fn ($q) => $q->where('max_amount', '>=', $request->input('min_amount')))
             ->when($request->filled('max_amount'), fn ($q) => $q->where('min_amount', '<=', $request->input('max_amount')));
 
@@ -101,6 +107,7 @@ class LenderController extends Controller
                 'processing_fee' => $product->processingFeeAmount($amount),
                 'emi' => $product->calculateEmi($amount, $tenure),
                 'eligibility' => $product->eligibility,
+                'income_band' => $this->incomeBand($product),
                 'required_documents' => $product->required_documents ?? [],
             ];
         });
@@ -114,5 +121,24 @@ class LenderController extends Controller
                 'tenure' => $tenure,
             ])->render(),
         ]);
+    }
+
+    /** Human readable income band, e.g. "₹25,000 – ₹30,000/month". */
+    protected function incomeBand(LenderProduct $product): ?string
+    {
+        $min = $product->min_monthly_income !== null ? (float) $product->min_monthly_income : null;
+        $max = $product->max_monthly_income !== null ? (float) $product->max_monthly_income : null;
+
+        if ($min === null && $max === null) {
+            return null;
+        }
+
+        $fmt = fn (float $v) => '₹'.number_format($v, 0, '.', ',');
+
+        return match (true) {
+            $min !== null && $max !== null => $fmt($min).' – '.$fmt($max).' /month',
+            $min !== null => 'Above '.$fmt($min).' /month',
+            default => 'Up to '.$fmt($max).' /month',
+        };
     }
 }
