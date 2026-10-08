@@ -175,6 +175,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('feed', [NotificationController::class, 'feed'])->name('feed');
         Route::post('read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
         Route::post('{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+        Route::get('{notification}/open', [NotificationController::class, 'open'])->name('open');
         Route::delete('{notification}', [NotificationController::class, 'destroy'])->name('destroy');
     });
 
