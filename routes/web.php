@@ -12,6 +12,7 @@ use App\Http\Controllers\Finance\PaymentController;
 use App\Http\Controllers\Leads\LeadController;
 use App\Http\Controllers\Master\MasterController;
 use App\Http\Controllers\Products\LenderController;
+use App\Http\Controllers\Products\LenderOfferController;
 use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\System\AttendanceController;
 use App\Http\Controllers\System\EmployeeController;
@@ -71,6 +72,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('lenders', [LenderController::class, 'index'])->name('lenders.index');
     Route::get('lenders/products', [LenderController::class, 'products'])->name('lenders.products');
     Route::get('lenders/{lender}', [LenderController::class, 'show'])->name('lenders.show');
+    Route::prefix('lenders/{lender}/offers')->name('lenders.offers.')->group(function () {
+        Route::get('create', [LenderOfferController::class, 'create'])->name('create');
+        Route::post('/', [LenderOfferController::class, 'store'])->name('store');
+        Route::get('{offer}/edit', [LenderOfferController::class, 'edit'])->name('edit');
+        Route::put('{offer}', [LenderOfferController::class, 'update'])->name('update');
+        Route::delete('{offer}', [LenderOfferController::class, 'destroy'])->name('destroy');
+    });
 
     /* Lead management ---------------------------------------------------- */
     Route::prefix('leads')->name('leads.')->group(function () {
