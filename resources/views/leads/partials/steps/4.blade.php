@@ -17,10 +17,10 @@
         <div class="col-md-4"><x-input name="pan_number" label="PAN number" :value="$customer?->pan_number" maxlength="10" placeholder="ABCDE1234F" help="Format: ABCDE1234F" /></div>
         <div class="col-md-4"><x-input name="aadhaar_number" label="Aadhaar number" :value="$customer?->aadhaar_number" maxlength="12" placeholder="12 digit number" /></div>
 
+        <div class="col-md-3"><x-input name="pincode" label="Pincode" :value="$customer?->pincode" maxlength="6" required /></div>
+        <div class="col-md-3"><x-input name="city" label="City" :value="$customer?->city" readonly /></div>
+        <div class="col-md-3"><x-input name="state" label="State" :value="$customer?->state" readonly /></div>
         <div class="col-md-3"><x-input name="nationality" label="Nationality" :value="$customer?->nationality ?? 'Indian'" /></div>
-        <div class="col-md-3"><x-input name="city" label="City" :value="$customer?->city" /></div>
-        <div class="col-md-3"><x-input name="state" label="State" :value="$customer?->state" /></div>
-        <div class="col-md-3"><x-input name="pincode" label="Pincode" :value="$customer?->pincode" maxlength="6" /></div>
 
         <div class="col-12">
             <x-textarea name="address" label="Residential address" rows="2" :value="$customer?->address" />

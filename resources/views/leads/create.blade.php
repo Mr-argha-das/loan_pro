@@ -102,6 +102,22 @@
     categorySelect?.addEventListener('change', filterSubcategories);
     filterSubcategories();
 
+    /* Pincode lookup: fills city and state as soon as a valid Indian pincode is entered. */
+    const pincode = document.querySelector('[name="pincode"]');
+    const city = document.querySelector('[name="city"]');
+    const state = document.querySelector('[name="state"]');
+    pincode?.addEventListener('input', async () => {
+        const value = pincode.value.replace(/\D/g, '').slice(0, 6);
+        pincode.value = value;
+        if (value.length !== 6) return;
+        try {
+            const response = await fetch(`https://api.postalpincode.in/pincode/${value}`);
+            const payload = await response.json();
+            const postOffice = payload?.[0]?.PostOffice?.[0];
+            if (postOffice) { city.value = postOffice.District || postOffice.Block || ''; state.value = postOffice.State || ''; }
+        } catch (error) { console.warn('Pincode lookup unavailable', error); }
+    });
+
     /* --------------------------------------------------------- save actions */
 
     async function submitStep({ draft = false, next = null } = {}) {
@@ -292,6 +308,7 @@
             sort: document.getElementById('lender-filter-sort')?.value ?? 'roi',
             direction: document.getElementById('lender-filter-direction')?.value ?? 'asc',
             loan_amount: document.getElementById('loan_amount')?.value ?? {{ (int) ($lead->loan_amount ?? 500000) }},
+            monthly_income: document.getElementById('monthly_income')?.value ?? {{ (float) ($lead?->customer?->monthly_income ?? 0) }},
             tenure_months: document.getElementById('tenure_months')?.value ?? {{ (int) ($lead->tenure_months ?? 36) }},
             ...params,
         });

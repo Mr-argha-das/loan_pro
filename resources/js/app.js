@@ -11,6 +11,15 @@ import Chart from 'chart.js/auto';
 window.bootstrap = bootstrap;
 window.Chart = Chart;
 
+/* ------------------------------------------------------------------ live header clock */
+const clock = document.querySelector('[data-live-clock]');
+if (clock) {
+    const tick = () => clock.textContent = new Intl.DateTimeFormat('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).format(new Date());
+    tick(); setInterval(tick, 1000);
+}
+
 /* ------------------------------------------------------------------ attendance location */
 document.addEventListener('submit', (event) => {
     const form = event.target.closest?.('[data-attendance-geo]');

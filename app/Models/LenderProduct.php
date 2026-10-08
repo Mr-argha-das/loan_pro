@@ -19,7 +19,7 @@ class LenderProduct extends Model
         'lender_id', 'product_id', 'product_category_id', 'product_subcategory_id', 'product_name',
         'code', 'loan_type', 'min_amount', 'max_amount', 'min_tenure_months', 'max_tenure_months',
         'roi', 'apr', 'processing_fee', 'processing_fee_type', 'penal_charge', 'penal_charge_type',
-        'min_credit_score', 'min_monthly_income', 'eligibility', 'required_documents', 'remarks',
+        'min_credit_score', 'min_monthly_income', 'max_monthly_income', 'eligibility', 'required_documents', 'remarks',
         'is_featured', 'status', 'sort_order',
     ];
 
@@ -31,6 +31,7 @@ class LenderProduct extends Model
         'processing_fee' => 'decimal:3',
         'penal_charge' => 'decimal:3',
         'min_monthly_income' => 'decimal:2',
+        'max_monthly_income' => 'decimal:2',
         'required_documents' => 'array',
         'is_featured' => 'boolean',
     ];

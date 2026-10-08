@@ -49,7 +49,7 @@ class LeadController extends Controller
 
         $query = Lead::query()
             ->ownedBy($request->user())
-            ->with(['customer', 'category', 'subcategory', 'leadStatus', 'assignee', 'source'])
+            ->with(['customer', 'category', 'subcategory', 'leadStatus', 'assignee', 'source', 'statusHistories'])
             ->search($request->string('q')->toString())
             ->filter($request)
             ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $request->integer('product_id')))
@@ -141,7 +141,8 @@ class LeadController extends Controller
 
         $step = max(1, min(10, $step));
 
-        if ($step === 3 && $lead->is_otp_verified && ! $request->boolean('reverify')) {
+        // OTP verification has been removed from the lead flow.
+        if ($step === 3) {
             return redirect()->route('leads.wizard', ['lead' => $lead, 'step' => 4]);
         }
 
@@ -164,7 +165,7 @@ class LeadController extends Controller
             default => $this->leads->updateStep($lead, $step, $request->validated()),
         };
 
-        $nextStep = min(10, $step + 1);
+        $nextStep = $step === 2 ? 4 : min(10, $step + 1);
         $asDraft = $request->boolean('is_draft');
 
         if (! $asDraft) {

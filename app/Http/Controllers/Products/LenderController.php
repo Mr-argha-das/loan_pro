@@ -58,6 +58,7 @@ class LenderController extends Controller
 
         $amount = (float) $request->input('loan_amount', 500000);
         $tenure = (int) $request->input('tenure_months', 36);
+        $monthlyIncome = $request->filled('monthly_income') ? (float) $request->input('monthly_income') : null;
 
         $query = LenderProduct::query()
             ->with(['lender', 'category'])
@@ -72,7 +73,14 @@ class LenderController extends Controller
                     ->orWhereHas('lender', fn ($l) => $l->where('name', 'like', "%{$term}%")));
             })
             ->when($request->filled('min_amount'), fn ($q) => $q->where('max_amount', '>=', $request->input('min_amount')))
-            ->when($request->filled('max_amount'), fn ($q) => $q->where('min_amount', '<=', $request->input('max_amount')));
+            ->when($request->filled('max_amount'), fn ($q) => $q->where('min_amount', '<=', $request->input('max_amount')))
+            ->when($monthlyIncome !== null, fn ($q) => $q
+                ->where(function ($income) use ($monthlyIncome) {
+                    $income->whereNull('min_monthly_income')->orWhere('min_monthly_income', '<=', $monthlyIncome);
+                })
+                ->where(function ($income) use ($monthlyIncome) {
+                    $income->whereNull('max_monthly_income')->orWhere('max_monthly_income', '>=', $monthlyIncome);
+                }));
 
         $sort = $request->string('sort', 'roi')->toString();
         $direction = $request->string('direction')->toString() === 'desc' ? 'desc' : 'asc';

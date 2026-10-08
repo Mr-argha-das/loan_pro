@@ -4,11 +4,11 @@
             <x-select name="product_id" label="Product" required :options="$products" :value="$lead?->product_id" placeholder="Select product" />
         </div>
         <div class="col-md-4">
-            <x-select name="product_category_id" label="Category" :options="$categories" :value="$lead?->product_category_id" placeholder="Select category" />
+            <x-select name="product_category_id" label="Category" required :options="$categories" :value="$lead?->product_category_id" placeholder="Select category" />
         </div>
         <div class="col-md-4">
-            <label class="form-label" for="product_subcategory_id">Purpose / Plan</label>
-            <select class="form-select" id="product_subcategory_id" name="product_subcategory_id">
+            <label class="form-label" for="product_subcategory_id">Purpose / Sub Category<span class="req">*</span></label>
+            <select class="form-select" id="product_subcategory_id" name="product_subcategory_id" required>
                 <option value="">Select purpose</option>
                 @foreach ($subcategories as $subcategory)
                     <option value="{{ $subcategory->id }}" data-category="{{ $subcategory->product_category_id }}"
@@ -29,7 +29,6 @@
             <x-input name="credit_score" label="Credit score" type="number" min="300" max="900" :value="$lead?->credit_score" />
         </div>
         <div class="col-md-3">
-            <x-input name="preferred_bank" label="Preferred lender" :value="$lead?->preferred_bank" />
         </div>
     </div>
 

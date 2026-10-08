@@ -74,6 +74,8 @@
                         </div>
                         <div class="col-md-4"><x-input name="joining_date" label="Joining date" type="date" :value="old('joining_date', $employee->joining_date?->toDateString() ?? now()->toDateString())" /></div>
                         <div class="col-md-4"><x-input name="monthly_target" label="Monthly target" type="number" step="1000" :value="old('monthly_target', $employee->monthly_target)" icon="bi-currency-rupee" /></div>
+                        <div class="col-md-4"><x-input name="monthly_salary" label="Monthly salary" type="number" step="100" :value="old('monthly_salary', $employee->monthly_salary)" icon="bi-currency-rupee" /></div>
+                        <div class="col-md-4"><x-input name="coin_per_approved_lead" label="Coins per approved lead" type="number" step="0.01" :value="old('coin_per_approved_lead', $employee->coin_per_approved_lead ?? 0)" icon="bi-coin" /></div>
                         <div class="col-md-4"><x-input name="reporting_to" label="Reporting to (user id)" type="number" :value="old('reporting_to', $employee->reporting_to)" /></div>
                     </div>
                 </x-section>

@@ -23,12 +23,14 @@ class Employee extends Model
         'user_id', 'employee_code', 'department_id', 'designation_id', 'reporting_to', 'joining_date',
         'employment_status', 'profile_photo_path', 'mobile', 'alternate_mobile', 'address', 'city',
         'state', 'pincode', 'emergency_contact_name', 'emergency_contact_number', 'bank_name',
-        'bank_account_number', 'bank_ifsc', 'monthly_target', 'remarks',
+        'bank_account_number', 'bank_ifsc', 'monthly_target', 'monthly_salary', 'coin_per_approved_lead', 'remarks',
     ];
 
     protected $casts = [
         'joining_date' => 'date',
         'monthly_target' => 'decimal:2',
+        'monthly_salary' => 'decimal:2',
+        'coin_per_approved_lead' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
