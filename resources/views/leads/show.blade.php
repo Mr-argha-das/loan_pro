@@ -34,7 +34,7 @@
             </form>
         @endcan
         @can('delete', $lead)
-            <form method="POST" action="{{ route('leads.destroy', $lead) }}" class="d-inline" data-confirm="Delete lead {{ $lead->lead_code }}? This cannot be undone.">
+            <form method="POST" action="{{ route('leads.destroy', $lead) }}" class="d-inline" onsubmit="return window.confirm('Delete lead {{ $lead->lead_code }}? This cannot be undone.');">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
             </form>

@@ -74,9 +74,9 @@
                             @can('delete', $lead)
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form method="POST" action="{{ route('leads.destroy', $lead) }}">
+                                    <form method="POST" action="{{ route('leads.destroy', $lead) }}" onsubmit="return window.confirm('Delete lead {{ $lead->lead_code }}? This can be restored by an administrator.');">
                                         @csrf @method('DELETE')
-                                        <button class="dropdown-item text-danger" data-confirm="Delete lead {{ $lead->lead_code }}? This can be restored by an administrator."><i class="bi bi-trash"></i> Delete</button>
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash"></i> Delete</button>
                                     </form>
                                 </li>
                             @endcan
