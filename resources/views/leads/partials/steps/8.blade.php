@@ -1,12 +1,5 @@
 <x-section title="Lender Selection" icon="bi-bank" description="Compare partner lenders and pick the products to submit.">
-    @if (! $lead?->is_otp_verified)
-        <div class="alert alert-warning d-flex gap-2 small">
-            <i class="bi bi-exclamation-triangle"></i>
-            <div>Complete OTP verification before selecting lenders.</div>
-        </div>
-    @endif
-
-    <div class="row g-2 mb-3">
+    <div class="row g-2 mb-3 d-none">
         <div class="col-md-3">
             <label class="form-label" for="lender-filter-search">Search lender</label>
             <input type="search" class="form-control" id="lender-filter-search" data-lender-filter placeholder="Bank or product name">

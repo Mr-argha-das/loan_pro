@@ -11,6 +11,27 @@ import Chart from 'chart.js/auto';
 window.bootstrap = bootstrap;
 window.Chart = Chart;
 
+/* ------------------------------------------------------------------ live header clock */
+const clock = document.querySelector('[data-live-clock]');
+if (clock) {
+    const tick = () => clock.textContent = new Intl.DateTimeFormat('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).format(new Date());
+    tick(); setInterval(tick, 1000);
+}
+
+/* ------------------------------------------------------------------ attendance location */
+document.addEventListener('submit', (event) => {
+    const form = event.target.closest?.('[data-attendance-geo]');
+    if (!form || form.dataset.locationReady || !navigator.geolocation) return;
+    event.preventDefault();
+    navigator.geolocation.getCurrentPosition((position) => {
+        form.querySelector('[name=latitude]')?.setAttribute('value', position.coords.latitude);
+        form.querySelector('[name=longitude]')?.setAttribute('value', position.coords.longitude);
+        form.dataset.locationReady = '1'; form.submit();
+    }, () => { form.dataset.locationReady = '1'; form.submit(); }, { enableHighAccuracy: true, timeout: 8000 });
+});
+
 /* ------------------------------------------------------------------ csrf */
 
 const csrfToken = () =>
@@ -328,6 +349,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Destructive buttons normally live inside a regular POST/DELETE form.
+        // Submit that form after the confirmation instead of silently stopping.
+        const parentForm = trigger.closest('form');
+        if (parentForm) {
+            parentForm.submit();
+            return;
+        }
+
         if (trigger.tagName === 'A' && trigger.href) {
             window.location.href = trigger.href;
             return;
@@ -403,12 +432,17 @@ document.addEventListener('DOMContentLoaded', () => {
     /* notification bell */
     document.querySelector('[data-notification-bell]')?.addEventListener('click', async (event) => {
         event.preventDefault();
-        const payload = await LoanPro.request('/notifications/feed');
         const dropdown = document.getElementById('lp-notification-feed');
-
-        if (dropdown) {
-            dropdown.innerHTML = payload.html;
+        try {
+            const payload = await LoanPro.request('/notifications/feed');
+            if (dropdown) {
+                dropdown.innerHTML = payload.html;
+                bootstrap.Dropdown.getOrCreateInstance(event.currentTarget).show();
+            }
+        } catch (error) {
+            if (dropdown) dropdown.innerHTML = '<div class="lp-empty py-4"><i class="bi bi-exclamation-triangle"></i>Unable to load notifications. Please try again.</div>';
             bootstrap.Dropdown.getOrCreateInstance(event.currentTarget).show();
+            LoanPro.toast(error.message ?? 'Unable to load notifications.', 'danger');
         }
     });
 

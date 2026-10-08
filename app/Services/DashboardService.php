@@ -201,6 +201,7 @@ class DashboardService
 
         return Product::query()
             ->withCount(['categories' => fn ($q) => $q->where('is_active', true)])
+            ->where('slug', Product::REAL_ESTATE)
             ->ordered()
             ->get()
             ->map(fn (Product $product) => [

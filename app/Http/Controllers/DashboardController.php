@@ -28,7 +28,7 @@ class DashboardController extends Controller
             'categories' => $this->dashboard->categoryDistribution($user),
             'statuses' => $this->dashboard->statusDistribution($user),
             'disbursements' => $this->dashboard->monthlyDisbursement($user),
-            'recentLeads' => $this->dashboard->recentLeads($user, 6),
+            'recentLeads' => $this->dashboard->recentLeads($user, 7),
             'products' => $this->dashboard->productSummary(),
         ]);
     }

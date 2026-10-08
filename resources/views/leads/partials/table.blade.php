@@ -9,10 +9,10 @@
                 <th scope="col">Product / Category</th>
                 <x-sortable-th column="loan_amount" label="Amount" />
                 <x-sortable-th column="status" label="Status" />
-                <x-sortable-th column="priority" label="Priority" />
                 <th scope="col">Owner</th>
                 <th scope="col">Step</th>
                 <x-sortable-th column="created_at" label="Created" />
+                <th scope="col">Close</th>
                 <th scope="col" class="text-end">Actions</th>
             </tr>
         </thead>
@@ -35,9 +35,6 @@
                     </td>
                     <td class="fw-semibold">{{ \App\Support\Format::money($lead->loan_amount) }}</td>
                     <td><x-status-badge :status="$lead->status" :label="$lead->leadStatus?->name" /></td>
-                    <td>
-                        <x-status-badge :status="$lead->priority" />
-                    </td>
                     <td>{{ $lead->assignee?->name ?? 'Unassigned' }}</td>
                     <td>
                         <div class="progress" style="width:64px" role="progressbar" aria-valuenow="{{ $lead->progressPercent() }}" aria-valuemin="0" aria-valuemax="100">
@@ -46,13 +43,14 @@
                         <div class="text-muted" style="font-size:.7rem">{{ $lead->current_step }}/10 &middot; {{ $lead->stepName() }}</div>
                     </td>
                     <td class="text-muted">{{ $lead->created_at?->format('d M Y') }}</td>
+                    <td class="text-muted">{{ in_array($lead->status, ['closed','rejected','cancelled'], true) ? ($lead->statusHistories->sortByDesc('created_at')->first()?->created_at?->format('d M Y') ?? '—') : '—' }}</td>
                     <td class="text-end">
                         <x-dropdown>
                             <li><a class="dropdown-item" href="{{ route('leads.show', $lead) }}"><i class="bi bi-eye"></i> View details</a></li>
                             <li><button class="dropdown-item" type="button" data-quick-view="{{ route('leads.quick-view', $lead) }}"><i class="bi bi-lightning"></i> Quick view</button></li>
 
                             @can('update', $lead)
-                                <li><a class="dropdown-item" href="{{ route('leads.wizard', ['lead' => $lead, 'step' => $lead->current_step]) }}"><i class="bi bi-pencil-square"></i> Continue wizard</a></li>
+                                <li><a class="dropdown-item" href="{{ route('leads.wizard', ['lead' => $lead, 'step' => $lead->current_step]) }}"><i class="bi bi-pencil-square"></i> Edit details</a></li>
                                 <li><button class="dropdown-item" type="button" data-status-modal="{{ route('leads.status', $lead) }}"><i class="bi bi-arrow-repeat"></i> Change status</button></li>
                             @endcan
 
@@ -60,23 +58,12 @@
                                 <li><button class="dropdown-item" type="button" data-assign-modal="{{ route('leads.assign', $lead) }}"><i class="bi bi-person-plus"></i> Assign employee</button></li>
                             @endcan
 
-                            @can('convert', $lead)
-                                <li>
-                                    <form method="POST" action="{{ route('leads.convert', $lead) }}">
-                                        @csrf
-                                        <button class="dropdown-item text-success" data-confirm="Create a loan application from {{ $lead->lead_code }}?" data-confirm-title="Convert lead">
-                                            <i class="bi bi-arrow-right-circle"></i> Convert to application
-                                        </button>
-                                    </form>
-                                </li>
-                            @endcan
-
                             @can('delete', $lead)
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form method="POST" action="{{ route('leads.destroy', $lead) }}">
+                                    <form method="POST" action="{{ route('leads.destroy', $lead) }}" onsubmit="return window.confirm('Delete lead {{ $lead->lead_code }}? This can be restored by an administrator.');">
                                         @csrf @method('DELETE')
-                                        <button class="dropdown-item text-danger" data-confirm="Delete lead {{ $lead->lead_code }}? This can be restored by an administrator."><i class="bi bi-trash"></i> Delete</button>
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash"></i> Delete</button>
                                     </form>
                                 </li>
                             @endcan

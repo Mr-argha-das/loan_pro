@@ -55,7 +55,8 @@ class CodeGeneratorService
 
     protected function generate(string $prefix, string $table, string $column, int $padLength = 4): string
     {
-        $datePart = now()->format('Ymd');
+        // Business series use the compact YYMM period, e.g. LD26010001, CU26010001, INV26010001.
+        $datePart = now()->format('ym');
 
         for ($attempt = 0; $attempt < 10; $attempt++) {
             $sequence = $this->nextSequence($table, $column, $prefix.$datePart);

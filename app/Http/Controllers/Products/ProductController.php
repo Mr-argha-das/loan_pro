@@ -24,6 +24,7 @@ class ProductController extends Controller
 
         return view('products.index', [
             'products' => Product::query()
+                ->where('slug', Product::REAL_ESTATE)
                 ->active()
                 ->ordered()
                 ->withCount([

@@ -80,7 +80,10 @@ class NotificationController extends Controller
             ]);
         }
 
-        return redirect($notification->url ?: route('notifications.index'));
+        // The bell feed uses a GET link for convenience. Always return to the
+        // notification centre after marking it read; notification URLs can be
+        // stale when a record has subsequently been removed.
+        return redirect()->route('notifications.index');
     }
 
     public function markAllRead(Request $request): JsonResponse|RedirectResponse

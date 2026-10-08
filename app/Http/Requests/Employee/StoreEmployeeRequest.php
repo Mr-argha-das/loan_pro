@@ -36,6 +36,8 @@ class StoreEmployeeRequest extends FormRequest
             'pincode' => ['nullable', 'digits:6'],
             'employment_status' => ['nullable', Rule::in(['active', 'probation', 'notice', 'resigned', 'terminated'])],
             'monthly_target' => ['nullable', 'numeric', 'min:0'],
+            'monthly_salary' => ['nullable', 'numeric', 'min:0'],
+            'coin_per_approved_lead' => ['nullable', 'numeric', 'min:0'],
             'bank_name' => ['nullable', 'string', 'max:120'],
             'bank_account_number' => ['nullable', 'string', 'max:40'],
             'bank_ifsc' => ['nullable', 'string', 'max:20'],

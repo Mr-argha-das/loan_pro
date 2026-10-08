@@ -6,8 +6,8 @@
             <tr>
                 <th scope="col">Date</th>
                 <th scope="col">Employee</th>
-                <th scope="col">Check in</th>
-                <th scope="col">Check out</th>
+                <th scope="col">Check in (time / location)</th>
+                <th scope="col">Check out (time / location)</th>
                 <th scope="col">Hours</th>
                 <th scope="col">Late</th>
                 <th scope="col">Work mode</th>
@@ -19,8 +19,8 @@
                 <tr>
                     <td class="fw-semibold text-nowrap">{{ \App\Support\Format::date($record->attendance_date) }}</td>
                     <td>{{ $record->employee?->user?->name ?? '—' }}</td>
-                    <td>{{ \App\Support\Format::time($record->check_in_at) }}</td>
-                    <td>{{ \App\Support\Format::time($record->check_out_at) }}</td>
+                    <td><div>{{ \App\Support\Format::time($record->check_in_at) }}</div>@if($record->check_in_latitude)<a class="small text-muted" target="_blank" href="https://maps.google.com/?q={{ $record->check_in_latitude }},{{ $record->check_in_longitude }}"><i class="bi bi-geo-alt"></i> {{ number_format($record->check_in_latitude, 5) }}, {{ number_format($record->check_in_longitude, 5) }}</a>@endif</td>
+                    <td><div>{{ \App\Support\Format::time($record->check_out_at) }}</div>@if($record->check_out_latitude)<a class="small text-muted" target="_blank" href="https://maps.google.com/?q={{ $record->check_out_latitude }},{{ $record->check_out_longitude }}"><i class="bi bi-geo-alt"></i> {{ number_format($record->check_out_latitude, 5) }}, {{ number_format($record->check_out_longitude, 5) }}</a>@endif</td>
                     <td>{{ $record->workedHours() ?? '—' }}</td>
                     <td>
                         @if ((int) $record->late_minutes > 0)

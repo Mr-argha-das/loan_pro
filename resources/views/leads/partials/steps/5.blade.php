@@ -10,7 +10,7 @@
         <div class="col-md-4"><x-input name="designation" label="Designation" :value="$customer?->designation" /></div>
 
         <div class="col-md-3">
-            <x-input name="monthly_income" label="Monthly income" type="number" step="1000" :value="$customer?->monthly_income" icon="bi-currency-rupee" />
+            <x-input name="monthly_income" label="Monthly income" type="number" step="1000" :value="$customer?->monthly_income" icon="bi-currency-rupee" required />
         </div>
         <div class="col-md-3">
             <x-input name="work_experience_years" label="Total experience (years)" type="number" :value="$customer?->work_experience_years" />

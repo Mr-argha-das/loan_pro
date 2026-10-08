@@ -25,21 +25,17 @@
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
+        <span class="text-muted small d-none d-lg-inline" data-live-clock>{{ now()->format('d M Y, h:i A') }}</span>
         @if ($user->employee && $user->hasPermissionTo('attendance.mark'))
-            <form method="POST" action="{{ route($todayAttendance?->check_in_at ? 'attendance.check-out' : 'attendance.check-in') }}" class="d-none d-md-block">
+            <form method="POST" action="{{ route($todayAttendance?->check_in_at ? 'attendance.check-out' : 'attendance.check-in') }}" class="d-none d-md-block" data-attendance-geo>
                 @csrf
+                <input type="hidden" name="latitude"><input type="hidden" name="longitude">
                 <button class="btn btn-sm {{ $todayAttendance?->check_in_at ? 'btn-outline-secondary' : 'btn-success' }}">
                     <i class="bi {{ $todayAttendance?->check_in_at ? 'bi-box-arrow-right' : 'bi-box-arrow-in-right' }}"></i>
                     {{ $todayAttendance?->check_in_at ? 'Check out' : 'Check in' }}
                 </button>
             </form>
         @endif
-
-        @canPermission('leads.create')
-            <a href="{{ route('leads.create') }}" class="btn btn-sm btn-primary d-none d-sm-inline-flex">
-                <i class="bi bi-plus-lg"></i> New Lead
-            </a>
-        @endcanPermission
 
         <div class="dropdown">
             <button class="btn btn-icon btn-light position-relative" data-notification-bell data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">

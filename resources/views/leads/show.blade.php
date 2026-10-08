@@ -27,14 +27,8 @@
                 <i class="bi bi-arrow-repeat"></i> Change Status
             </button>
         @endcan
-        @can('convert', $lead)
-            <form method="POST" action="{{ route('leads.convert', $lead) }}" class="d-inline" data-confirm="Create a loan application from this lead?">
-                @csrf
-                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-arrow-right-circle"></i> Create Application</button>
-            </form>
-        @endcan
         @can('delete', $lead)
-            <form method="POST" action="{{ route('leads.destroy', $lead) }}" class="d-inline" data-confirm="Delete lead {{ $lead->lead_code }}? This cannot be undone.">
+            <form method="POST" action="{{ route('leads.destroy', $lead) }}" class="d-inline" onsubmit="return window.confirm('Delete lead {{ $lead->lead_code }}? This cannot be undone.');">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
             </form>
@@ -106,7 +100,6 @@
         'journey' => ['label' => 'Lead Journey', 'icon' => 'bi-signpost-split'],
         'lenders' => ['label' => 'Lenders', 'icon' => 'bi-bank', 'count' => $lead->lenders->count()],
         'documents' => ['label' => 'Documents', 'icon' => 'bi-folder-check', 'count' => $lead->documents->count()],
-        'applications' => ['label' => 'Applications', 'icon' => 'bi-clipboard-data', 'count' => $lead->applications->count()],
         'remarks' => ['label' => 'Remarks', 'icon' => 'bi-chat-left-text', 'count' => $lead->remarks->count()],
     ]">
 
@@ -121,7 +114,6 @@
                             <div class="lp-kv"><span class="lp-kv__label">PAN</span><span class="lp-kv__value">{{ $lead->customer?->pan_number ?? '—' }}</span></div>
                             <div class="lp-kv"><span class="lp-kv__label">Aadhaar</span><span class="lp-kv__value">{{ $lead->customer?->aadhaar_number ? \App\Support\Format::mask($lead->customer->aadhaar_number) : '—' }}</span></div>
                             <div class="lp-kv"><span class="lp-kv__label">Address</span><span class="lp-kv__value">{{ collect([$lead->customer?->address, $lead->customer?->city, $lead->customer?->pincode])->filter()->implode(', ') ?: '—' }}</span></div>
-                            <div class="lp-kv"><span class="lp-kv__label">KYC status</span><span class="lp-kv__value"><x-status-badge :status="$lead->customer?->kyc_status ?? 'pending'" /></span></div>
                         </x-card>
                     </div>
 
@@ -273,6 +265,7 @@
             {{-- ------------------------------------------------------ documents --}}
             <div class="tab-pane fade" id="lead-tabs-documents" role="tabpanel" aria-labelledby="lead-tabs-documents-tab">
                 <x-card title="Documents" icon="bi-folder-check" description="Files are stored privately and never exposed publicly.">
+                    <x-slot:actions><a href="{{ route('leads.documents.zip', $lead) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-zip"></i> Download all ZIP</a></x-slot:actions>
                     <x-slot:actions>
                         @can('create', App\Models\Document::class)
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#upload-document-modal">
@@ -329,57 +322,6 @@
                                     </tr>
                                 @empty
                                     <tr><td colspan="6"><x-empty-state icon="bi-folder2-open" title="No documents uploaded" message="Upload identity, address and income proofs to strengthen the file." /></td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </x-card>
-            </div>
-
-            {{-- --------------------------------------------------- applications --}}
-            <div class="tab-pane fade" id="lead-tabs-applications" role="tabpanel" aria-labelledby="lead-tabs-applications-tab">
-                <x-card title="Linked applications" icon="bi-clipboard-data">
-                    <div class="table-responsive">
-                        <table class="lp-table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Application ID</th>
-                                    <th scope="col">Lender</th>
-                                    <th scope="col">Category</th>
-                                    <th scope="col">Amount</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Created</th>
-                                    <th scope="col" class="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($lead->applications as $application)
-                                    <tr>
-                                        <td><a href="{{ route('applications.show', $application) }}" class="fw-semibold">{{ $application->application_code }}</a></td>
-                                        <td>{{ $application->lender?->name ?? '—' }}</td>
-                                        <td>{{ $application->category?->name ?? '—' }}</td>
-                                        <td class="fw-semibold">{{ \App\Support\Format::money($application->loan_amount) }}</td>
-                                        <td><x-status-badge :status="$application->status" :label="$application->applicationStatus?->name" /></td>
-                                        <td class="text-muted text-nowrap">{{ $application->created_at?->format('d M Y') }}</td>
-                                        <td class="text-end">
-                                            <a href="{{ route('applications.show', $application) }}" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7">
-                                            <x-empty-state icon="bi-clipboard-data" title="No applications yet" message="Convert this lead once the customer confirms a lender.">
-                                                <x-slot:action>
-                                                    @can('convert', $lead)
-                                                        <form method="POST" action="{{ route('leads.convert', $lead) }}">
-                                                            @csrf
-                                                            <button class="btn btn-primary btn-sm">Create application</button>
-                                                        </form>
-                                                    @endcan
-                                                </x-slot:action>
-                                            </x-empty-state>
-                                        </td>
-                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>

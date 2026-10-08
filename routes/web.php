@@ -86,6 +86,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('{lead}/remarks', [LeadController::class, 'addRemark'])->name('remarks.store');
         Route::post('{lead}/convert', [LeadController::class, 'convert'])->name('convert');
         Route::get('{lead}/quick-view', [LeadController::class, 'quickView'])->name('quick-view');
+        Route::get('{lead}/documents/download-zip', [LeadController::class, 'downloadDocumentsZip'])->name('documents.zip');
         Route::delete('{lead}', [LeadController::class, 'destroy'])->name('destroy');
     });
 
@@ -173,7 +174,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
         Route::get('feed', [NotificationController::class, 'feed'])->name('feed');
         Route::post('read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
-        Route::post('{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+        Route::match(['get', 'post'], '{notification}/read', [NotificationController::class, 'markRead'])->name('read');
         Route::delete('{notification}', [NotificationController::class, 'destroy'])->name('destroy');
     });
 
