@@ -2,6 +2,12 @@
 
 <x-section title="Personal Information" icon="bi-person-lines-fill" description="Identity details as per the customer's official documents.">
     <div class="row g-3">
+        <div class="col-md-4">
+            <x-input name="pincode" label="Pincode" :value="$customer?->pincode" maxlength="6" inputmode="numeric"
+                     placeholder="6 digit pincode" help="Enter the pincode first — city and state fill automatically." data-pincode />
+        </div>
+        <div class="col-md-4"><x-input name="city" label="City" :value="$customer?->city" data-pincode-city /></div>
+        <div class="col-md-4"><x-input name="state" label="State" :value="$customer?->state" data-pincode-state /></div>
         <div class="col-md-4"><x-input name="date_of_birth" label="Date of birth" type="date" :value="$customer?->date_of_birth?->toDateString()" /></div>
         <div class="col-md-4">
             <x-select name="gender" label="Gender" :options="['male' => 'Male', 'female' => 'Female', 'other' => 'Other']"
@@ -18,12 +24,6 @@
         <div class="col-md-4"><x-input name="aadhaar_number" label="Aadhaar number" :value="$customer?->aadhaar_number" maxlength="12" placeholder="12 digit number" /></div>
 
         <div class="col-md-3"><x-input name="nationality" label="Nationality" :value="$customer?->nationality ?? 'Indian'" /></div>
-        <div class="col-md-3">
-            <x-input name="pincode" label="Pincode" :value="$customer?->pincode" maxlength="6" inputmode="numeric"
-                     placeholder="6 digit pincode" help="Enter the pincode first — city and state fill automatically." data-pincode />
-        </div>
-        <div class="col-md-3"><x-input name="city" label="City" :value="$customer?->city" data-pincode-city /></div>
-        <div class="col-md-3"><x-input name="state" label="State" :value="$customer?->state" data-pincode-state /></div>
 
         <div class="col-12">
             <x-textarea name="address" label="Residential address" rows="2" :value="$customer?->address" />

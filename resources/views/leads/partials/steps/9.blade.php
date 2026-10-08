@@ -56,7 +56,7 @@
                     @if ($lender->is_primary)<span class="lp-badge bg-success-subtle text-success bg-opacity-10">Primary</span>@endif
                 </div>
             @empty
-                <div class="text-muted small">No lenders shortlisted. You can still create the application and add lenders later.</div>
+                <div class="text-muted small">No lenders shortlisted. You can still save the lead and add lenders later.</div>
             @endforelse
 
             <div class="mt-3">
