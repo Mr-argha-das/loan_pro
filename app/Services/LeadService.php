@@ -158,7 +158,7 @@ class LeadService
             $lead->save();
 
             if ($lead->customer) {
-                $this->saveCustomerDetails($lead->customer, $data, $professional = $step >= 5);
+                $this->saveCustomerDetails($lead->customer, $data, $professional = $step >= 4);
             }
 
             return $lead->refresh();

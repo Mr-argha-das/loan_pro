@@ -74,6 +74,8 @@
                         </div>
                         <div class="col-md-4"><x-input name="joining_date" label="Joining date" type="date" :value="old('joining_date', $employee->joining_date?->toDateString() ?? now()->toDateString())" /></div>
                         <div class="col-md-4"><x-input name="monthly_target" label="Monthly target" type="number" step="1000" :value="old('monthly_target', $employee->monthly_target)" icon="bi-currency-rupee" /></div>
+                        <div class="col-md-4"><x-input name="monthly_salary" label="Monthly salary" type="number" step="500" min="0" :value="old('monthly_salary', $employee->monthly_salary)" icon="bi-currency-rupee" help="Paid each month from the Payments module." /></div>
+                        <div class="col-md-4"><x-input name="coins_per_lead" label="Coins per approved lead" type="number" step="0.5" min="0" :value="old('coins_per_lead', $employee->coins_per_lead)" help="Incentive coins earned for each approved lead." /></div>
                         <div class="col-md-4"><x-input name="reporting_to" label="Reporting to (user id)" type="number" :value="old('reporting_to', $employee->reporting_to)" /></div>
                     </div>
                 </x-section>

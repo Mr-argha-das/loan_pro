@@ -12,6 +12,7 @@ use App\Http\Controllers\Finance\PaymentController;
 use App\Http\Controllers\Leads\LeadController;
 use App\Http\Controllers\Master\MasterController;
 use App\Http\Controllers\Products\LenderController;
+use App\Http\Controllers\Products\LenderOfferController;
 use App\Http\Controllers\Products\ProductController;
 use App\Http\Controllers\System\AttendanceController;
 use App\Http\Controllers\System\EmployeeController;
@@ -56,6 +57,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('change-password', [LoginController::class, 'showChangePassword'])->name('password.change');
     Route::post('change-password', [LoginController::class, 'changePassword'])->name('password.update');
 
+    /* Pincode lookup (auto-fills city / state in the lead wizard) -------- */
+    Route::get('pincodes/{pincode}', [\App\Http\Controllers\System\PincodeController::class, 'lookup'])
+        ->where('pincode', '[0-9]{6}')->name('pincodes.lookup');
+
     /* Global search ------------------------------------------------------ */
     Route::get('search', GlobalSearchController::class)->name('search');
 
@@ -67,6 +72,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('lenders', [LenderController::class, 'index'])->name('lenders.index');
     Route::get('lenders/products', [LenderController::class, 'products'])->name('lenders.products');
     Route::get('lenders/{lender}', [LenderController::class, 'show'])->name('lenders.show');
+    Route::prefix('lenders/{lender}/offers')->name('lenders.offers.')->group(function () {
+        Route::get('create', [LenderOfferController::class, 'create'])->name('create');
+        Route::post('/', [LenderOfferController::class, 'store'])->name('store');
+        Route::get('{offer}/edit', [LenderOfferController::class, 'edit'])->name('edit');
+        Route::put('{offer}', [LenderOfferController::class, 'update'])->name('update');
+        Route::delete('{offer}', [LenderOfferController::class, 'destroy'])->name('destroy');
+    });
 
     /* Lead management ---------------------------------------------------- */
     Route::prefix('leads')->name('leads.')->group(function () {
@@ -79,8 +91,6 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('{lead}', [LeadController::class, 'show'])->name('show');
         Route::get('{lead}/wizard/{step?}', [LeadController::class, 'wizard'])->name('wizard');
         Route::post('{lead}/wizard/{step}', [LeadController::class, 'saveStep'])->name('wizard.save');
-        Route::post('{lead}/otp', [LeadController::class, 'sendOtp'])->name('otp.send');
-        Route::post('{lead}/otp/verify', [LeadController::class, 'verifyOtp'])->name('otp.verify');
         Route::post('{lead}/status', [LeadController::class, 'changeStatus'])->name('status');
         Route::post('{lead}/assign', [LeadController::class, 'assign'])->name('assign');
         Route::post('{lead}/remarks', [LeadController::class, 'addRemark'])->name('remarks.store');
@@ -144,15 +154,14 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('{invoice}', [InvoiceController::class, 'destroy'])->name('destroy');
     });
 
-    /* Payments ----------------------------------------------------------- */
+    /* Payments = monthly employee payouts (salary + incentive) ----------- */
     Route::prefix('payments')->name('payments.')->group(function () {
         Route::get('/', [PaymentController::class, 'index'])->name('index');
-        Route::get('export', [PaymentController::class, 'export'])->name('export');
+        Route::get('summary', [PaymentController::class, 'summary'])->name('summary');
         Route::get('create', [PaymentController::class, 'create'])->name('create');
         Route::post('/', [PaymentController::class, 'store'])->name('store');
         Route::get('{payment}/edit', [PaymentController::class, 'edit'])->name('edit');
         Route::put('{payment}', [PaymentController::class, 'update'])->name('update');
-        Route::get('{payment}', [PaymentController::class, 'show'])->name('show');
         Route::delete('{payment}', [PaymentController::class, 'destroy'])->name('destroy');
     });
 
@@ -174,6 +183,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('feed', [NotificationController::class, 'feed'])->name('feed');
         Route::post('read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
         Route::post('{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+        Route::get('{notification}/open', [NotificationController::class, 'open'])->name('open');
         Route::delete('{notification}', [NotificationController::class, 'destroy'])->name('destroy');
     });
 

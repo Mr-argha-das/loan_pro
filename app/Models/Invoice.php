@@ -23,7 +23,8 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_number', 'customer_id', 'lead_id', 'loan_application_id', 'title', 'invoice_date',
         'due_date', 'subtotal', 'discount', 'tax_rate', 'tax_amount', 'total', 'paid_amount',
-        'balance_amount', 'status', 'place_of_supply', 'notes', 'terms', 'created_by', 'issued_by',
+        'balance_amount', 'status', 'place_of_supply', 'gst_treatment', 'gstin', 'gst_legal_name',
+        'gst_trade_name', 'pan_number', 'notes', 'terms', 'created_by', 'issued_by',
         'issued_at', 'paid_at', 'cancelled_at',
     ];
 

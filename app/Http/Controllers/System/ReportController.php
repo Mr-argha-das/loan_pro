@@ -262,7 +262,7 @@ class ReportController extends Controller
 
         $stages = [
             'Leads Created' => $base()->count(),
-            'OTP Verified' => $base()->whereNotNull('otp_verified_at')->count(),
+            'Verified' => $base()->where('status', 'verified')->count(),
             'Lenders Selected' => $base()->whereHas('lenders')->count(),
             'Applications Created' => LoanApplication::query()->ownedBy($user)->dateBetween($from->toDateString(), $to->toDateString())->count(),
             'Approved' => LoanApplication::query()->ownedBy($user)->whereIn('status', ['approved', 'disbursed'])->count(),

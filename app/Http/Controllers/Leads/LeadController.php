@@ -7,7 +7,6 @@ use App\Http\Requests\Lead\AssignLeadRequest;
 use App\Http\Requests\Lead\ChangeLeadStatusRequest;
 use App\Http\Requests\Lead\StoreLeadRequest;
 use App\Http\Requests\Lead\UpdateLeadStepRequest;
-use App\Http\Requests\Lead\VerifyOtpRequest;
 use App\Models\Customer;
 use App\Models\DocumentType;
 use App\Models\EmploymentType;
@@ -24,7 +23,6 @@ use App\Models\User;
 use App\Services\DocumentService;
 use App\Services\ExportService;
 use App\Services\LeadService;
-use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,7 +32,6 @@ class LeadController extends Controller
 {
     public function __construct(
         protected LeadService $leads,
-        protected OtpService $otp,
         protected DocumentService $documents,
     ) {
     }
@@ -48,6 +45,7 @@ class LeadController extends Controller
         $query = Lead::query()
             ->ownedBy($request->user())
             ->with(['customer', 'category', 'subcategory', 'leadStatus', 'assignee', 'source'])
+            ->withMax('statusHistories as last_status_at', 'created_at')
             ->search($request->string('q')->toString())
             ->filter($request)
             ->when($request->filled('product_id'), fn ($q) => $q->where('product_id', $request->integer('product_id')))
@@ -55,7 +53,7 @@ class LeadController extends Controller
             ->when($request->filled('assigned_to'), fn ($q) => $q->where('assigned_to', $request->integer('assigned_to')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->integer('priority')))
             ->when($request->boolean('drafts_only'), fn ($q) => $q->draft())
-            ->when($request->boolean('verified_only'), fn ($q) => $q->where('is_otp_verified', true));
+            ;
 
         $this->applySort($query, $request, ['created_at', 'lead_code', 'loan_amount', 'priority', 'status']);
 
@@ -85,7 +83,7 @@ class LeadController extends Controller
             'total' => $base()->count(),
             'draft' => $base()->draft()->count(),
             'new' => $base()->where('status', 'new')->count(),
-            'verified' => $base()->where('is_otp_verified', true)->count(),
+            'verified' => $base()->where('status', 'verified')->count(),
             'converted' => $base()->where('is_converted', true)->count(),
             'rejected' => $base()->whereIn('status', ['rejected', 'cancelled'])->count(),
         ];
@@ -137,11 +135,7 @@ class LeadController extends Controller
     {
         $this->authorize('update', $lead);
 
-        $step = max(1, min(10, $step));
-
-        if ($step === 3 && $lead->is_otp_verified && ! $request->boolean('reverify')) {
-            return redirect()->route('leads.wizard', ['lead' => $lead, 'step' => 4]);
-        }
+        $step = max(1, min(Lead::LAST_STEP, $step));
 
         return view('leads.create', array_merge($this->wizardPayload($lead, $step), [
             'lead' => $lead->load(['customer.addresses', 'customer.professionalDetails', 'documents.documentType', 'lenders.lender', 'lenders.lenderProduct']),
@@ -152,24 +146,23 @@ class LeadController extends Controller
     {
         $this->authorize('update', $lead);
 
-        $step = max(1, min(10, $step));
+        $step = max(1, min(Lead::LAST_STEP, $step));
 
         $lead = match ($step) {
             1 => $this->updateCustomerStep($lead, $request),
-            3 => $lead,
-            6 => $this->handleDocuments($request, $lead),
-            8, 9 => $this->handleLenderSelection($request, $lead),
+            5 => $this->handleDocuments($request, $lead),
+            7, 8 => $this->handleLenderSelection($request, $lead),
             default => $this->leads->updateStep($lead, $step, $request->validated()),
         };
 
-        $nextStep = min(10, $step + 1);
+        $nextStep = min(Lead::LAST_STEP, $step + 1);
         $asDraft = $request->boolean('is_draft');
 
         if (! $asDraft) {
             $lead = $this->leads->updateStep($lead, $step, ['current_step' => $nextStep]);
         }
 
-        if ($step === 7 && ! $asDraft && $lead->status === 'draft') {
+        if ($step === 6 && ! $asDraft && $lead->status === 'draft') {
             $this->leads->changeStatus($lead, 'new', 'Basic details and loan requirement captured.', $request->user());
         }
 
@@ -276,44 +269,11 @@ class LeadController extends Controller
 
         $lead->refresh();
 
-        if ($lead->lenders()->exists() && $lead->is_otp_verified && $lead->status === 'new') {
+        if ($lead->lenders()->exists() && $lead->status === 'new') {
             $this->leads->changeStatus($lead, 'lender-selected', 'Lenders shortlisted for the customer.', $request->user());
         }
 
         return $lead->refresh();
-    }
-
-    /* ------------------------------------------------------------------ otp */
-
-    public function sendOtp(Request $request, Lead $lead): JsonResponse
-    {
-        $this->authorize('update', $lead);
-
-        $code = $this->otp->generate($lead);
-        $lead->forceFill(['otp_channel' => 'sms'])->save();
-
-        return $this->ok('A 6-digit OTP has been sent to '.$lead->customer->mobile.'.', [
-            'expires_in' => $this->otp->expiresIn($lead),
-            'demo_code' => app()->environment('production') ? null : $code,
-        ]);
-    }
-
-    public function verifyOtp(VerifyOtpRequest $request, Lead $lead): JsonResponse
-    {
-        $this->authorize('update', $lead);
-
-        if (! $this->otp->verify($lead, $request->validated('otp'))) {
-            return $this->fail('The OTP entered is incorrect or has expired. Please try again.', 422);
-        }
-
-        if ($lead->status === 'draft') {
-            $this->leads->changeStatus($lead, 'verified', 'Mobile number verified via OTP.', $request->user());
-        }
-
-        return $this->ok('Mobile number verified successfully.', [
-            'verified_at' => $lead->refresh()->otp_verified_at?->toDateTimeString(),
-            'next_url' => route('leads.wizard', ['lead' => $lead, 'step' => 4]),
-        ]);
     }
 
     /* ------------------------------------------------------------------ actions */
@@ -453,11 +413,9 @@ class LeadController extends Controller
 
     protected function wizardPayload(?Lead $lead, int $step): array
     {
+        // Categories are filtered client side by the chosen product (Loans / Insurance / ...),
+        // so every active category is sent along with its product id.
         $categoryQuery = ProductCategory::query()->active()->ordered();
-
-        if ($lead?->product_id) {
-            $categoryQuery->where('product_id', $lead->product_id);
-        }
 
         return [
             'step' => $step,
@@ -466,6 +424,7 @@ class LeadController extends Controller
             'sources' => LeadSource::query()->active()->ordered()->get(),
             'products' => Product::query()->active()->ordered()->get(),
             'categories' => $categoryQuery->get(),
+            'allCategories' => ProductCategory::query()->active()->ordered()->get(),
             'subcategories' => ProductSubcategory::query()->active()->ordered()->get(),
             'employmentTypes' => EmploymentType::query()->active()->ordered()->get(),
             'documentTypes' => DocumentType::query()->active()->orderBy('sort_order')->get(),

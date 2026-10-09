@@ -39,7 +39,12 @@
         </div>
 
         <div class="col-lg-8">
-            <x-card title="Product offers" icon="bi-box-seam" description="Rates and eligibility defined per lender product." :padding="false">
+            <x-card title="Product offers" icon="bi-box-seam" description="Rates, amounts and the monthly income band each offer is shown to." :padding="false">
+                @if (auth()->user()->hasPermissionTo('lenders.manage'))
+                    <x-slot:actions>
+                        <a href="{{ route('lenders.offers.create', $lender) }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add offer</a>
+                    </x-slot:actions>
+                @endif
                 <div class="lp-table-wrap">
                     <table class="lp-table">
                         <thead>
@@ -48,10 +53,11 @@
                                 <th scope="col">Category</th>
                                 <th scope="col">Loan type</th>
                                 <th scope="col">Amount range</th>
+                                <th scope="col">Income band</th>
                                 <th scope="col">ROI</th>
-                                <th scope="col">APR</th>
                                 <th scope="col">Max tenor</th>
                                 <th scope="col">Status</th>
+                                <th scope="col" class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,13 +67,31 @@
                                     <td>{{ $offer->category?->name ?? '—' }}</td>
                                     <td>{{ \App\Support\Format::titleCase($offer->loan_type) }}</td>
                                     <td>{{ \App\Support\Format::compactInr($offer->min_amount) }} – {{ \App\Support\Format::compactInr($offer->max_amount) }}</td>
-                                    <td class="fw-semibold">{{ $offer->roi !== null ? $offer->roi.'%' : '—' }}</td>
-                                    <td>{{ $offer->apr !== null ? $offer->apr.'%' : '—' }}</td>
+                                    <td>
+                                        @if ($offer->min_monthly_income || $offer->max_monthly_income)
+                                            {{ $offer->min_monthly_income ? \App\Support\Format::money($offer->min_monthly_income) : 'Any' }}
+                                            –
+                                            {{ $offer->max_monthly_income ? \App\Support\Format::money($offer->max_monthly_income) : 'Any' }}
+                                        @else
+                                            <span class="text-muted">No limit</span>
+                                        @endif
+                                    </td>
+                                    <td class="fw-semibold">{{ $offer->roi !== null ? $offer->roi.'%' : '—' }}{{ $offer->apr !== null ? ' / APR '.$offer->apr.'%' : '' }}</td>
                                     <td>{{ $offer->max_tenure_months }} mo</td>
                                     <td><x-status-badge :status="$offer->status" /></td>
+                                    <td class="text-end">
+                                        @if (auth()->user()->hasPermissionTo('lenders.manage'))
+                                            <a href="{{ route('lenders.offers.edit', [$lender, $offer]) }}" class="btn btn-sm btn-light" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                                            <form method="POST" action="{{ route('lenders.offers.destroy', [$lender, $offer]) }}" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-sm btn-light text-danger" title="Remove" data-confirm="Remove the {{ $offer->product_name }} offer?"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="8"><x-empty-state icon="bi-box-seam" title="No offers configured" message="Add lender products from Master Management → Lenders." /></td></tr>
+                                <tr><td colspan="9"><x-empty-state icon="bi-box-seam" title="No offers configured" message="Add the products this lender funds, with the income band for each." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

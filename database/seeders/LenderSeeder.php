@@ -172,7 +172,9 @@ class LenderSeeder extends Seeder
                     'penal_charge' => 2.0 + ($bucket * 0.25),
                     'penal_charge_type' => 'percent',
                     'min_credit_score' => 700 + ($bucket * 15),
+                    // Income band the bank serves, e.g. 25,000-30,000. Open-ended for the top band.
                     'min_monthly_income' => 20000 + ($bucket * 5000),
+                    'max_monthly_income' => $bucket >= 3 ? null : 25000 + ($bucket * 5000),
                     'eligibility' => 'Age 21-60 years, minimum 6 months in current employment/business, credit score '.$lender->code.' approved.',
                     'required_documents' => $documents,
                     'status' => 'active',

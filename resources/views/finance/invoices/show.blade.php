@@ -122,11 +122,6 @@
         <div class="col-lg-4">
             <x-card title="Payments" icon="bi-wallet2">
                 <x-slot:actions>
-                    @canPermission('payments.create')
-                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#invoice-payment-modal">
-                            <i class="bi bi-plus-lg"></i> Record
-                        </button>
-                    @endcanPermission
                 </x-slot:actions>
 
                 @forelse ($invoice->payments as $payment)
@@ -148,25 +143,4 @@
         </div>
     </div>
 
-    @canPermission('payments.create')
-        <x-modal id="invoice-payment-modal" title="Record payment" :action="route('payments.store')" submit-label="Save payment">
-            <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
-            <input type="hidden" name="customer_id" value="{{ $invoice->customer_id }}">
-
-            <div class="row g-3">
-                <div class="col-md-6"><x-input name="amount" label="Amount" type="number" step="0.01" :value="$invoice->balance_amount" required icon="bi-currency-rupee" /></div>
-                <div class="col-md-6"><x-input name="payment_date" label="Payment date" type="date" :value="now()->toDateString()" required /></div>
-                <div class="col-md-6">
-                    <label class="form-label" for="payment_method_id">Payment mode<span class="req">*</span></label>
-                    <select class="form-select" id="payment_method_id" name="payment_method_id" required>
-                        @foreach ($paymentMethods as $method)
-                            <option value="{{ $method->id }}">{{ $method->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-6"><x-input name="transaction_id" label="Transaction / UTR" /></div>
-                <div class="col-12"><x-textarea name="remarks" label="Remarks" rows="2" /></div>
-            </div>
-        </x-modal>
-    @endcanPermission
 @endsection

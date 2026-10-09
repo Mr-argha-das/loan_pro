@@ -147,9 +147,6 @@
                                 @canPermission('invoices.create')
                                     <a href="{{ route('invoices.create', ['customer_id' => $customer->id]) }}" class="lp-quick-action"><i class="bi bi-receipt"></i> Raise an invoice</a>
                                 @endcanPermission
-                                @canPermission('payments.create')
-                                    <a href="{{ route('payments.create', ['customer_id' => $customer->id]) }}" class="lp-quick-action"><i class="bi bi-wallet2"></i> Record a payment</a>
-                                @endcanPermission
                                 @canPermission('documents.create')
                                     <button type="button" class="lp-quick-action" data-bs-toggle="modal" data-bs-target="#customer-document-modal">
                                         <i class="bi bi-cloud-arrow-up"></i> Upload document
@@ -494,7 +491,7 @@
                                     <tbody>
                                         @forelse ($payments as $payment)
                                             <tr>
-                                                <td><a href="{{ route('payments.show', $payment) }}" class="fw-semibold">{{ $payment->payment_code }}</a></td>
+                                                <td class="fw-semibold">{{ $payment->payment_code }}</td>
                                                 <td class="text-muted text-nowrap">{{ $payment->payment_date?->format('d M Y') }}</td>
                                                 <td>{{ $payment->paymentMethod?->name ?? '—' }}</td>
                                                 <td class="fw-semibold">{{ \App\Support\Format::money($payment->amount) }}</td>

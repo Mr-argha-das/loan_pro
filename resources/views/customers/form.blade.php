@@ -82,6 +82,24 @@
             </div>
 
             <div class="col-lg-4">
+                <x-section title="GST details" icon="bi-receipt" description="Used to fill invoices automatically when this customer is selected.">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="gst_treatment">GST treatment</label>
+                            <select class="form-select" id="gst_treatment" name="gst_treatment">
+                                <option value="">Select treatment</option>
+                                @foreach (['Registered Business - Regular', 'Registered Business - Composition', 'Unregistered Business', 'Consumer', 'Overseas'] as $treatment)
+                                    <option value="{{ $treatment }}" @selected(($customer->gst_treatment ?? '') === $treatment)>{{ $treatment }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4"><x-input name="gstin" label="GSTIN / UIN" :value="$customer->gstin" maxlength="15" placeholder="15 character GSTIN" /></div>
+                        <div class="col-md-4"><x-input name="place_of_supply" label="Place of supply" :value="$customer->place_of_supply" placeholder="e.g. [RJ] - Rajasthan" /></div>
+                        <div class="col-md-6"><x-input name="gst_legal_name" label="Business legal name" :value="$customer->gst_legal_name" /></div>
+                        <div class="col-md-6"><x-input name="gst_trade_name" label="Business trade name" :value="$customer->gst_trade_name" /></div>
+                    </div>
+                </x-section>
+
                 <x-section title="Ownership" icon="bi-person-badge" description="Who owns this relationship internally.">
                     <div class="mb-3">
                         <label class="form-label" for="assigned_employee_id">Relationship manager</label>
