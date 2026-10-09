@@ -29,7 +29,6 @@
             <div class="lp-kv"><span class="lp-kv__label">Designation</span><span class="lp-kv__value">{{ $customer?->designation ?? '—' }}</span></div>
             <div class="lp-kv"><span class="lp-kv__label">Monthly income</span><span class="lp-kv__value">{{ \App\Support\Format::money($customer?->monthly_income) }}</span></div>
             <div class="lp-kv"><span class="lp-kv__label">Existing EMI</span><span class="lp-kv__value">{{ \App\Support\Format::money($lead->existing_emi) }}</span></div>
-            <div class="lp-kv"><span class="lp-kv__label">Credit score</span><span class="lp-kv__value">{{ $lead->credit_score ?? '—' }}</span></div>
         </div>
 
         <div class="col-lg-6">

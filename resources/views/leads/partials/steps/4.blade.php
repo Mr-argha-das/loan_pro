@@ -19,9 +19,6 @@
         <div class="col-md-3">
             <x-input name="existing_emi" label="Existing EMI obligations" type="number" step="500" :value="$lead?->existing_emi" icon="bi-currency-rupee" />
         </div>
-        <div class="col-md-3">
-            <x-input name="credit_score" label="Credit score" type="number" min="300" max="900" :value="$lead?->credit_score" />
-        </div>
 
         <div class="col-12">
             <x-textarea name="office_address" label="Office address" rows="2" :value="$customer?->office_address" />

@@ -82,7 +82,6 @@
                 <div class="col-6 col-md-3"><span class="text-muted">Purpose:</span> <span class="fw-semibold">{{ $lead->subcategory?->name ?? '—' }}</span></div>
                 <div class="col-6 col-md-3"><span class="text-muted">Source:</span> <span class="fw-semibold">{{ $lead->source?->name ?? '—' }}</span></div>
                 <div class="col-6 col-md-3"><span class="text-muted">Owner:</span> <span class="fw-semibold">{{ $lead->assignee?->name ?? 'Unassigned' }}</span></div>
-                <div class="col-6 col-md-3"><span class="text-muted">Credit score:</span> <span class="fw-semibold">{{ $lead->credit_score ?? '—' }}</span></div>
                 <div class="col-6 col-md-3"><span class="text-muted">Existing EMI:</span> <span class="fw-semibold">{{ \App\Support\Format::money($lead->existing_emi) }}</span></div>
                 <div class="col-6 col-md-3"><span class="text-muted">Last activity:</span> <span class="fw-semibold">{{ $lead->last_activity_at?->diffForHumans() ?? '—' }}</span></div>
                 <div class="col-6 col-md-3"><span class="text-muted">Created by:</span> <span class="fw-semibold">{{ $lead->creator?->name ?? '—' }}</span></div>

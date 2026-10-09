@@ -20,8 +20,7 @@
         <div class="lp-kv"><span class="lp-kv__label">Loan amount</span><span class="lp-kv__value">{{ \App\Support\Format::money($lead->loan_amount) }}</span></div>
         <div class="lp-kv"><span class="lp-kv__label">Tenure</span><span class="lp-kv__value">{{ \App\Support\Format::tenure($lead->tenure_months) }}</span></div>
         <div class="lp-kv"><span class="lp-kv__label">Monthly income</span><span class="lp-kv__value">{{ \App\Support\Format::money($lead->monthly_income) }}</span></div>
-        <div class="lp-kv"><span class="lp-kv__label">Credit score</span><span class="lp-kv__value">{{ $lead->credit_score ?? '—' }}</span></div>
-        <div class="lp-kv"><span class="lp-kv__label">Owner</span><span class="lp-kv__value">{{ $lead->assignee?->name ?? 'Unassigned' }}</span></div>
+                <div class="lp-kv"><span class="lp-kv__label">Owner</span><span class="lp-kv__value">{{ $lead->assignee?->name ?? 'Unassigned' }}</span></div>
         <div class="lp-kv"><span class="lp-kv__label">Created</span><span class="lp-kv__value">{{ $lead->created_at?->format('d M Y, h:i A') }}</span></div>
         <div class="lp-kv"><span class="lp-kv__label">Wizard progress</span><span class="lp-kv__value">{{ $lead->current_step }}/{{ \App\Models\Lead::LAST_STEP }} &middot; {{ $lead->stepName() }}</span></div>
     </div>
