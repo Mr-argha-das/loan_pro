@@ -95,7 +95,7 @@
         <div class="d-flex align-items-center gap-3 py-2 border-bottom">
             <span class="lp-tone-primary rounded-3 d-grid flex-shrink-0" style="width:36px;height:36px;place-items:center"><i class="bi bi-file-earmark-text"></i></span>
             <div class="flex-grow-1">
-                <div class="fw-semibold" style="font-size:.85rem">{{ $document->documentType?->name ?? 'Document' }}</div>
+                <div class="fw-semibold" style="font-size:.85rem">{{ $document->typeName() }}</div>
                 <div class="text-muted" style="font-size:.73rem">{{ $document->original_name }}@if ($document->issued_number) &middot; No. {{ $document->issued_number }}@endif</div>
             </div>
             <x-status-badge :status="$document->status" />

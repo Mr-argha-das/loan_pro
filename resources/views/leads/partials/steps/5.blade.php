@@ -72,7 +72,7 @@
             <tbody>
                 @forelse ($lead?->documents ?? [] as $document)
                     <tr>
-                        <td class="fw-semibold">{{ $document->documentType?->name ?? 'Document' }}</td>
+                        <td class="fw-semibold">{{ $document->typeName() }}</td>
                         <td>{{ $document->issued_number ?? '—' }}</td>
                         <td><x-status-badge :status="$document->status" /></td>
                         <td class="text-muted">{{ $document->created_at?->format('d M Y') }}</td>

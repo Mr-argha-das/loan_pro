@@ -63,7 +63,7 @@
                 @forelse ($lead->documents as $document)
                     <div class="d-flex align-items-center justify-content-between gap-2 py-1 border-bottom">
                         <div>
-                            <div class="fw-semibold" style="font-size:.85rem">{{ $document->documentType?->name ?? 'Document' }}</div>
+                            <div class="fw-semibold" style="font-size:.85rem">{{ $document->typeName() }}</div>
                             <div class="text-muted" style="font-size:.73rem">{{ $document->original_name }}</div>
                         </div>
                         <x-status-badge :status="$document->status" />

@@ -283,7 +283,7 @@
                                 @forelse ($lead->documents as $document)
                                     <tr>
                                         <td class="fw-semibold">
-                                            {{ $document->documentType?->name ?? 'Document' }}
+                                            {{ $document->typeName() }}
                                             @if ($document->is_required)<span class="text-danger">*</span>@endif
                                         </td>
                                         <td>{{ $document->issued_number ?? '—' }}</td>
