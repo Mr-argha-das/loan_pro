@@ -209,7 +209,7 @@
                 if (cityInput) cityInput.value = payload.city ?? '';
                 if (stateInput) stateInput.value = payload.state ?? '';
             } else {
-                LoanPro.toast('Pincode not found — please enter city and state manually.', 'warning');
+                LoanPro.toast('City aur state auto-fill nahi ho paaye — please manually bharein.', 'warning');
             }
         } catch (error) {
             // Lookup is a convenience only; the user can type city and state.
