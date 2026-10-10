@@ -166,6 +166,15 @@ class LeadController extends Controller
             $this->leads->changeStatus($lead, 'new', 'Basic details and loan requirement captured.', $request->user());
         }
 
+        // "Save Lead" on the final step completes the wizard: the lead is no longer a draft.
+        if ($step === Lead::LAST_STEP && ! $asDraft) {
+            $lead->forceFill(['is_draft' => false])->save();
+
+            if ($lead->status === 'draft') {
+                $this->leads->changeStatus($lead, 'new', 'Lead wizard completed.', $request->user());
+            }
+        }
+
         if ($request->expectsJson()) {
             return $this->ok($asDraft ? 'Saved as draft.' : 'Step saved.', [
                 'lead_id' => $lead->id,
