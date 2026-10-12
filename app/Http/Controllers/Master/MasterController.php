@@ -96,9 +96,19 @@ class MasterController extends Controller
         $config = $this->config($master);
         $model = $config['model'];
 
-        $data = $this->validated($request, $master);
+        $data = $this->withoutBlanks($this->validated($request, $master));
+
+        // Lenders-style masters use a `status` column instead of `is_active`: map the checkbox onto it.
+        if ($this->hasColumn($model, 'status') && ! $this->hasColumn($model, 'is_active') && empty($data['status'])) {
+            $data['status'] = $request->boolean('is_active') ? 'active' : 'inactive';
+        }
+
         $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
-        $data['code'] = $data['code'] ?? strtoupper(Str::substr(Str::slug($data['name'], ''), 0, 12));
+        $data['code'] = $data['code'] ?? $this->uniqueCode($model, $data['name']);
+
+        if ($data['code'] === null) {
+            unset($data['code']);
+        }
 
         if ($this->hasColumn($model, 'sort_order') && ! isset($data['sort_order'])) {
             $data['sort_order'] = $model::query()->max('sort_order') + 1;
@@ -120,7 +130,7 @@ class MasterController extends Controller
         $config = $this->config($master);
         $record = $config['model']::query()->findOrFail($id);
 
-        $data = $this->validated($request, $master, $record->id);
+        $data = $this->withoutBlanks($this->validated($request, $master, $record->id));
         $data['slug'] = $data['slug'] ?? $record->slug ?? Str::slug($data['name']);
 
         $record->update($data);
@@ -236,6 +246,37 @@ class MasterController extends Controller
     protected function defaultSort(string $model): string
     {
         return $this->hasColumn($model, 'sort_order') ? 'sort_order' : 'name';
+    }
+
+    /**
+     * Blank form fields are dropped so the database default applies. Sending NULL
+     * into a NOT NULL column (e.g. lender type / mode / status) would fail the save.
+     */
+    protected function withoutBlanks(array $data): array
+    {
+        return array_filter($data, fn ($value) => $value !== null && $value !== '');
+    }
+
+    /** Unique code for a master record, e.g. "HDFCBANK", "HDFCBANK2" when the name already exists. */
+    protected function uniqueCode(string $model, string $name): ?string
+    {
+        if (! $this->hasColumn($model, 'code')) {
+            return null;
+        }
+
+        $base = strtoupper(Str::substr(Str::slug($name, ''), 0, 12)) ?: 'REC';
+        $code = $base;
+        $suffix = 2;
+
+        while ($model::query()
+            ->when(method_exists($model, 'trashed'), fn ($query) => $query->withTrashed())
+            ->where('code', $code)
+            ->exists()) {
+            $code = $base.$suffix;
+            $suffix++;
+        }
+
+        return $code;
     }
 
     protected function hasColumn($model, string $column): bool

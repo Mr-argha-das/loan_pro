@@ -35,6 +35,8 @@
                             <span class="lp-badge bg-danger-subtle text-danger bg-opacity-10">Deleted</span>
                         @elseif (isset($item->is_active))
                             <x-status-badge :status="$item->is_active ? 'active' : 'inactive'" />
+                        @elseif (in_array($item->status ?? null, ['active', 'inactive', 'suspended'], true))
+                            <x-status-badge :status="$item->status" />
                         @else
                             —
                         @endif
