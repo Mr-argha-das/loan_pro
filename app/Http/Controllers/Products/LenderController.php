@@ -74,7 +74,11 @@ class LenderController extends Controller
                 $q->where(fn ($sub) => $sub->where('product_name', 'like', "%{$term}%")
                     ->orWhereHas('lender', fn ($l) => $l->where('name', 'like', "%{$term}%")));
             })
+            // Strict income matching: no income on the lead = nothing to match; a product without
+            // an income band is never offered; otherwise the income must fall inside the band.
+            ->when($income <= 0, fn ($q) => $q->whereRaw('1 = 0'))
             ->when($income > 0, fn ($q) => $q
+                ->where(fn ($band) => $band->whereNotNull('min_monthly_income')->orWhereNotNull('max_monthly_income'))
                 ->where(fn ($band) => $band->whereNull('min_monthly_income')->orWhere('min_monthly_income', '<=', $income))
                 ->where(fn ($band) => $band->whereNull('max_monthly_income')->orWhere('max_monthly_income', '>=', $income)))
             ->when($request->filled('min_amount'), fn ($q) => $q->where('max_amount', '>=', $request->input('min_amount')))
