@@ -146,8 +146,10 @@ class DisbursementController extends Controller
         $leads = Lead::query()
             ->ownedBy($user)
             ->with('customer')
-            ->where('status', 'approved')
-            ->whereDoesntHave('applications')
+            ->where(fn ($query) => $query->where('status', 'approved')
+                ->orWhereHas('leadStatus', fn ($status) => $status->where('slug', 'approved')))
+            // Leads whose application is already disbursable are listed through the application option above.
+            ->whereDoesntHave('applications', fn ($query) => $query->whereIn('status', ['approved', 'disbursement-pending']))
             ->latest()
             ->limit(500)
             ->get()
