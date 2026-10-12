@@ -7,19 +7,23 @@ use App\Http\Requests\Finance\ChangeDisbursementStatusRequest;
 use App\Http\Requests\Finance\StoreDisbursementRequest;
 use App\Models\Customer;
 use App\Models\Disbursement;
+use App\Models\Lead;
 use App\Models\Lender;
 use App\Models\LoanApplication;
 use App\Models\User;
 use App\Services\DisbursementService;
+use App\Services\LeadService;
 use App\Services\ExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class DisbursementController extends Controller
 {
-    public function __construct(protected DisbursementService $disbursements)
+    public function __construct(protected DisbursementService $disbursements, protected LeadService $leads)
     {
     }
 
@@ -78,7 +82,7 @@ class DisbursementController extends Controller
                 'status' => 'pending',
                 'mode' => 'neft',
             ]),
-            'applications' => $this->disbursableApplications($request->user(), $application?->id),
+            'choices' => $this->disbursementChoices($request->user(), $application?->id),
             'lenders' => Lender::query()->active()->ordered()->get(),
             'application' => $application,
         ]);
@@ -86,7 +90,7 @@ class DisbursementController extends Controller
 
     public function store(StoreDisbursementRequest $request): RedirectResponse
     {
-        $disbursement = $this->disbursements->create($request->validated(), $request->user());
+        $disbursement = $this->disbursements->create($this->resolvedData($request), $request->user());
 
         return redirect()->route('disbursements.show', $disbursement)->with('success', 'Disbursement '.$disbursement->disbursement_code.' created.');
     }
@@ -106,34 +110,97 @@ class DisbursementController extends Controller
 
         return view('finance.disbursements.form', [
             'disbursement' => $disbursement,
-            'applications' => $this->disbursableApplications(request()->user(), $disbursement->loan_application_id),
+            'choices' => $this->disbursementChoices(request()->user(), $disbursement->loan_application_id),
             'lenders' => Lender::query()->active()->ordered()->get(),
             'application' => $disbursement->application,
         ]);
     }
 
-    /** Approved applications (from approved leads) that can be disbursed, plus the one already linked. */
-    protected function disbursableApplications(?User $user, ?int $includeId = null)
+    /**
+     * Options for the single "Customer (approved lead)" field:
+     * approved applications, plus approved leads that do not have an application yet.
+     */
+    protected function disbursementChoices(User $user, ?int $includeApplicationId = null): Collection
     {
-        return LoanApplication::query()
+        $applications = LoanApplication::query()
             ->ownedBy($user)
             ->with(['customer', 'lead'])
-            ->where(function ($query) use ($includeId) {
+            ->where(function ($query) use ($includeApplicationId) {
                 $query->whereIn('status', ['approved', 'disbursement-pending']);
-                if ($includeId) {
-                    $query->orWhere('id', $includeId);
+                if ($includeApplicationId) {
+                    $query->orWhere('id', $includeApplicationId);
                 }
             })
             ->latest()
             ->limit(500)
-            ->get();
+            ->get()
+            ->map(fn (LoanApplication $application) => [
+                'label' => $this->choiceLabel($application->customer?->name, $application->customer?->mobile, $application->lead?->lead_code ?? $application->application_code),
+                'application_id' => $application->id,
+                'lead_id' => $application->lead_id,
+                'customer_id' => $application->customer_id,
+                'amount' => $application->sanctioned_amount ?: $application->loan_amount,
+                'lender_id' => $application->primary_lender_id,
+            ]);
+
+        $leads = Lead::query()
+            ->ownedBy($user)
+            ->with('customer')
+            ->where('status', 'approved')
+            ->whereDoesntHave('applications')
+            ->latest()
+            ->limit(500)
+            ->get()
+            ->map(fn (Lead $lead) => [
+                'label' => $this->choiceLabel($lead->customer?->name, $lead->customer?->mobile, $lead->lead_code),
+                'application_id' => null,
+                'lead_id' => $lead->id,
+                'customer_id' => $lead->customer_id,
+                'amount' => $lead->loan_amount,
+                'lender_id' => null,
+            ]);
+
+        return $applications->concat($leads)->values();
+    }
+
+    protected function choiceLabel(?string $name, ?string $mobile, ?string $code): string
+    {
+        return trim(implode(' · ', array_filter([$name, $mobile, $code])));
+    }
+
+    /**
+     * Turns the selected approved lead into a loan application (once) and returns the
+     * data the disbursement needs. Applications selected directly are used as they are.
+     */
+    protected function resolvedData(StoreDisbursementRequest $request): array
+    {
+        $data = $request->validated();
+        $user = $request->user();
+
+        if (! empty($data['loan_application_id'])) {
+            $application = LoanApplication::query()->ownedBy($user)->findOrFail($data['loan_application_id']);
+        } else {
+            $lead = Lead::query()->ownedBy($user)->findOrFail($data['lead_id']);
+
+            if ($lead->status !== 'approved') {
+                throw ValidationException::withMessages(['lead_id' => 'Only approved leads can be disbursed.']);
+            }
+
+            $application = $this->leads->convertToApplication($lead, $user);
+        }
+
+        $data['loan_application_id'] = $application->id;
+        $data['customer_id'] = $application->customer_id;
+        unset($data['lead_id']);
+
+        return $data;
     }
 
     public function update(StoreDisbursementRequest $request, Disbursement $disbursement): RedirectResponse
     {
         $this->authorize('update', $disbursement);
 
-        $this->disbursements->update($disbursement, $request->validated());
+        $this->disbursements->update($disbursement, $this->resolvedData($request));
 
         return redirect()->route('disbursements.show', $disbursement)->with('success', 'Disbursement updated.');
     }

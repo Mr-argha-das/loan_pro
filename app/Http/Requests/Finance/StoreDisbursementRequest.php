@@ -15,8 +15,9 @@ class StoreDisbursementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'loan_application_id' => ['required', 'exists:loan_applications,id'],
-            'customer_id' => ['required', 'exists:customers,id'],
+            'loan_application_id' => ['required_without:lead_id', 'exists:loan_applications,id'],
+            'lead_id' => ['required_without:loan_application_id', 'exists:leads,id'],
+            'customer_id' => ['nullable', 'exists:customers,id'],
             'lender_id' => ['nullable', 'exists:lenders,id'],
             'loan_lender_id' => ['nullable', 'exists:loan_lenders,id'],
             'approved_amount' => ['required', 'numeric', 'min:1'],

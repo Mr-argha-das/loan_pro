@@ -26,25 +26,29 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             @php
-                                $selectedId = (int) old('loan_application_id', $disbursement->loan_application_id);
-                                $selectedApplication = $applications->firstWhere('id', $selectedId);
-                                $applicationLabel = fn ($a) => trim(($a->customer?->name ?? '').' · '.($a->customer?->mobile ?? '').' · '.($a->lead?->lead_code ?? $a->application_code), ' ·');
+                                $selectedApplicationId = (int) old('loan_application_id', $disbursement->loan_application_id);
+                                $selectedLeadId = (int) old('lead_id');
+                                $selected = $choices->first(fn ($c) => $selectedApplicationId
+                                    ? $c['application_id'] === $selectedApplicationId
+                                    : ($selectedLeadId && $c['lead_id'] === $selectedLeadId));
                             @endphp
                             <label class="form-label" for="application-search">Customer (approved lead)<span class="req">*</span></label>
                             <input type="text" class="form-control" id="application-search" list="approved-application-options" autocomplete="off"
                                    placeholder="Search by customer name, mobile or lead code"
-                                   value="{{ $selectedApplication ? $applicationLabel($selectedApplication) : '' }}" required>
+                                   value="{{ $selected['label'] ?? '' }}" required>
                             <datalist id="approved-application-options">
-                                @foreach ($applications as $application)
-                                    <option value="{{ $applicationLabel($application) }}"
-                                            data-application="{{ $application->id }}"
-                                            data-customer="{{ $application->customer_id }}"
-                                            data-amount="{{ $application->sanctioned_amount ?: $application->loan_amount }}"
-                                            data-lender="{{ $application->primary_lender_id }}"></option>
+                                @foreach ($choices as $choice)
+                                    <option value="{{ $choice['label'] }}"
+                                            data-application="{{ $choice['application_id'] }}"
+                                            data-lead="{{ $choice['lead_id'] }}"
+                                            data-customer="{{ $choice['customer_id'] }}"
+                                            data-amount="{{ $choice['amount'] }}"
+                                            data-lender="{{ $choice['lender_id'] }}"></option>
                                 @endforeach
                             </datalist>
-                            <input type="hidden" name="loan_application_id" id="loan_application_id" value="{{ $selectedId ?: '' }}">
-                            @if ($applications->isEmpty())
+                            <input type="hidden" name="loan_application_id" id="loan_application_id" value="{{ $selectedApplicationId ?: '' }}">
+                            <input type="hidden" name="lead_id" id="lead_id" value="{{ $selectedApplicationId ? '' : ($selectedLeadId ?: '') }}">
+                            @if ($choices->isEmpty())
                                 <div class="form-text text-danger">No approved leads are available for disbursement.</div>
                             @else
                                 <div class="form-text">Only approved leads are listed. Pick one to fill the customer and loan details.</div>
@@ -147,6 +151,7 @@
             .find((opt) => opt.value === applicationSearch.value);
 
         document.getElementById('loan_application_id').value = match?.dataset.application ?? '';
+        document.getElementById('lead_id').value = match?.dataset.lead ?? '';
         document.getElementById('customer_id').value = match?.dataset.customer ?? '';
         if (!match) return;
 
