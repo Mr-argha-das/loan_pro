@@ -209,7 +209,7 @@
                 if (cityInput) cityInput.value = payload.city ?? '';
                 if (stateInput) stateInput.value = payload.state ?? '';
             } else {
-                LoanPro.toast('City aur state auto-fill nahi ho paaye — please manually bharein.', 'warning');
+                LoanPro.toast('City and state could not be auto-filled. Please enter them manually.', 'warning');
             }
         } catch (error) {
             // Lookup is a convenience only; the user can type city and state.

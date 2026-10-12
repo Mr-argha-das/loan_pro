@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Disbursement;
 use App\Models\Lender;
 use App\Models\LoanApplication;
+use App\Models\User;
 use App\Services\DisbursementService;
 use App\Services\ExportService;
 use Illuminate\Http\JsonResponse;
@@ -68,12 +69,8 @@ class DisbursementController extends Controller
         $this->authorize('create', Disbursement::class);
 
         $application = $request->filled('loan_application_id')
-            ? LoanApplication::query()->ownedBy($request->user())->with(['customer', 'lenders.lender'])->findOrFail($request->integer('loan_application_id'))
+            ? LoanApplication::query()->ownedBy($request->user())->with(['customer', 'lead'])->find($request->integer('loan_application_id'))
             : null;
-
-        // Flow: pick the customer first, then only that customer's APPROVED applications are offered.
-        $customer = $application?->customer
-            ?? ($request->filled('customer_id') ? Customer::query()->find($request->integer('customer_id')) : null);
 
         return view('finance.disbursements.form', [
             'disbursement' => new Disbursement([
@@ -81,15 +78,7 @@ class DisbursementController extends Controller
                 'status' => 'pending',
                 'mode' => 'neft',
             ]),
-            'customer' => $customer,
-            'customers' => Customer::query()->orderBy('name')->limit(2000)->get(['id', 'name', 'mobile']),
-            'applications' => $customer
-                ? LoanApplication::query()->ownedBy($request->user())
-                    ->with('customer')
-                    ->where('customer_id', $customer->id)
-                    ->whereIn('status', ['approved', 'disbursement-pending'])
-                    ->latest()->limit(300)->get()
-                : collect(),
+            'applications' => $this->disbursableApplications($request->user(), $application?->id),
             'lenders' => Lender::query()->active()->ordered()->get(),
             'application' => $application,
         ]);
@@ -115,22 +104,29 @@ class DisbursementController extends Controller
     {
         $this->authorize('update', $disbursement);
 
-        $customer = $disbursement->customer ?? $disbursement->application?->customer;
-
         return view('finance.disbursements.form', [
             'disbursement' => $disbursement,
-            'customer' => $customer,
-            'customers' => Customer::query()->orderBy('name')->limit(2000)->get(['id', 'name', 'mobile']),
-            'applications' => $customer
-                ? LoanApplication::query()->ownedBy(request()->user())->with('customer')
-                    ->where('customer_id', $customer->id)
-                    ->where(fn ($q) => $q->whereIn('status', ['approved', 'disbursement-pending'])
-                        ->orWhere('id', $disbursement->loan_application_id))
-                    ->latest()->limit(300)->get()
-                : collect(),
+            'applications' => $this->disbursableApplications(request()->user(), $disbursement->loan_application_id),
             'lenders' => Lender::query()->active()->ordered()->get(),
             'application' => $disbursement->application,
         ]);
+    }
+
+    /** Approved applications (from approved leads) that can be disbursed, plus the one already linked. */
+    protected function disbursableApplications(?User $user, ?int $includeId = null)
+    {
+        return LoanApplication::query()
+            ->ownedBy($user)
+            ->with(['customer', 'lead'])
+            ->where(function ($query) use ($includeId) {
+                $query->whereIn('status', ['approved', 'disbursement-pending']);
+                if ($includeId) {
+                    $query->orWhere('id', $includeId);
+                }
+            })
+            ->latest()
+            ->limit(500)
+            ->get();
     }
 
     public function update(StoreDisbursementRequest $request, Disbursement $disbursement): RedirectResponse

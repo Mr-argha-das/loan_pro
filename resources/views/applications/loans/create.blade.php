@@ -18,7 +18,7 @@
                     <div class="col-md-8">
                         <label class="form-label" for="customer-search">Customer</label>
                         <input type="text" class="form-control" id="customer-search" list="customer-options" autocomplete="off"
-                               placeholder="Naam ya mobile number type karein..."
+                               placeholder="Type customer name or mobile number..."
                                value="{{ $customer ? $customer->name.' · '.$customer->mobile : '' }}">
                         <datalist id="customer-options">
                             @foreach ($customers as $option)
@@ -105,7 +105,7 @@
         } else if (search.value.trim() === '') {
             hiddenId.value = '';
         } else {
-            LoanPro.toast('List mein se customer choose karein.', 'warning');
+            LoanPro.toast('Please choose a customer from the list.', 'warning');
         }
     });
 </script>

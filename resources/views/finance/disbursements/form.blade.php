@@ -25,32 +25,30 @@
                 <x-section title="Application & lender" icon="bi-clipboard-data">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label" for="customer-search">Customer<span class="req">*</span></label>
-                            <input type="text" class="form-control mb-3" id="customer-search" list="customer-options" autocomplete="off"
-                                   placeholder="Naam ya mobile type karke search karein..."
-                                   value="{{ $customer ? $customer->name.' · '.$customer->mobile : '' }}">
-                            <datalist id="customer-options">
-                                @foreach ($customers as $option)
-                                    <option value="{{ $option->name }} · {{ $option->mobile }}" data-id="{{ $option->id }}"></option>
-                                @endforeach
-                            </datalist>
-
-                            @if ($customer && $applications->isEmpty())
-                                <div class="form-text text-danger mb-2">{{ $customer->name }} ki koi approved application nahi hai. Pehle application approve karein.</div>
-                            @endif
-                            <label class="form-label" for="loan_application_id">Loan application (approved)<span class="req">*</span></label>
-                            <select class="form-select" id="loan_application_id" name="loan_application_id" required @disabled(! $customer)>
-                                <option value="">{{ $customer ? 'Select approved application' : 'Pehle customer select karein' }}</option>
+                            @php
+                                $selectedId = (int) old('loan_application_id', $disbursement->loan_application_id);
+                                $selectedApplication = $applications->firstWhere('id', $selectedId);
+                                $applicationLabel = fn ($a) => trim(($a->customer?->name ?? '').' · '.($a->customer?->mobile ?? '').' · '.($a->lead?->lead_code ?? $a->application_code), ' ·');
+                            @endphp
+                            <label class="form-label" for="application-search">Customer (approved lead)<span class="req">*</span></label>
+                            <input type="text" class="form-control" id="application-search" list="approved-application-options" autocomplete="off"
+                                   placeholder="Search by customer name, mobile or lead code"
+                                   value="{{ $selectedApplication ? $applicationLabel($selectedApplication) : '' }}" required>
+                            <datalist id="approved-application-options">
                                 @foreach ($applications as $application)
-                                    <option value="{{ $application->id }}"
+                                    <option value="{{ $applicationLabel($application) }}"
+                                            data-application="{{ $application->id }}"
                                             data-customer="{{ $application->customer_id }}"
                                             data-amount="{{ $application->sanctioned_amount ?: $application->loan_amount }}"
-                                            data-lender="{{ $application->primary_lender_id }}"
-                                            @selected((int) old('loan_application_id', $disbursement->loan_application_id) === $application->id)>
-                                        {{ $application->application_code }} — {{ $application->customer?->name }} ({{ \App\Support\Format::compactInr($application->loan_amount) }})
-                                    </option>
+                                            data-lender="{{ $application->primary_lender_id }}"></option>
                                 @endforeach
-                            </select>
+                            </datalist>
+                            <input type="hidden" name="loan_application_id" id="loan_application_id" value="{{ $selectedId ?: '' }}">
+                            @if ($applications->isEmpty())
+                                <div class="form-text text-danger">No approved leads are available for disbursement.</div>
+                            @else
+                                <div class="form-text">Only approved leads are listed. Pick one to fill the customer and loan details.</div>
+                            @endif
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="lender_id">Disbursing lender</label>
@@ -142,24 +140,19 @@
 
     document.querySelectorAll('[data-calc]').forEach((field) => field.addEventListener('input', recalc));
 
-    // Customer-first flow: choosing a customer reloads the page with only that customer's approved applications.
-    document.getElementById('customer-search')?.addEventListener('change', (event) => {
-        const match = [...document.querySelectorAll('#customer-options option')].find((opt) => opt.value === event.target.value);
+    // Pick an approved lead from the searchable field: fills application, customer, amount and lender.
+    const applicationSearch = document.getElementById('application-search');
+    applicationSearch?.addEventListener('input', () => {
+        const match = [...document.querySelectorAll('#approved-application-options option')]
+            .find((opt) => opt.value === applicationSearch.value);
+
+        document.getElementById('loan_application_id').value = match?.dataset.application ?? '';
+        document.getElementById('customer_id').value = match?.dataset.customer ?? '';
         if (!match) return;
-        const url = new URL(window.location.href);
-        url.searchParams.delete('loan_application_id');
-        url.searchParams.set('customer_id', match.dataset.id);
-        window.location.href = url.toString();
-    });
 
-    document.getElementById('loan_application_id')?.addEventListener('change', (event) => {
-        const option = event.target.selectedOptions[0];
-        if (!option?.value) return;
-
-        document.getElementById('customer_id').value = option.dataset.customer ?? '';
-        amountField('approved_amount').value = option.dataset.amount ?? '';
-        amountField('disbursed_amount').value = option.dataset.amount ?? '';
-        document.getElementById('lender_id').value = option.dataset.lender ?? '';
+        amountField('approved_amount').value = match.dataset.amount ?? '';
+        amountField('disbursed_amount').value = match.dataset.amount ?? '';
+        document.getElementById('lender_id').value = match.dataset.lender ?? '';
         recalc();
     });
 
