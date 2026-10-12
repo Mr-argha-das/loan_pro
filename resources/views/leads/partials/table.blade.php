@@ -40,6 +40,7 @@
                         <x-dropdown>
                             <li><a class="dropdown-item" href="{{ route('leads.show', $lead) }}"><i class="bi bi-eye"></i> View details</a></li>
                             <li><button class="dropdown-item" type="button" data-quick-view="{{ route('leads.quick-view', $lead) }}"><i class="bi bi-lightning"></i> Quick view</button></li>
+                            <li><a class="dropdown-item" href="{{ route('leads.export-zip', $lead) }}"><i class="bi bi-file-earmark-zip"></i> Download ZIP (data + documents)</a></li>
 
                             @can('update', $lead)
                                 <li><a class="dropdown-item" href="{{ route('leads.wizard', ['lead' => $lead, 'step' => $lead->current_step]) }}"><i class="bi bi-pencil-square"></i> Edit details</a></li>

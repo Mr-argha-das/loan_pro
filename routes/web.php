@@ -96,6 +96,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('{lead}/remarks', [LeadController::class, 'addRemark'])->name('remarks.store');
         Route::post('{lead}/convert', [LeadController::class, 'convert'])->name('convert');
         Route::get('{lead}/quick-view', [LeadController::class, 'quickView'])->name('quick-view');
+        Route::get('{lead}/export-zip', [LeadController::class, 'exportZip'])->name('export-zip');
         Route::delete('{lead}', [LeadController::class, 'destroy'])->name('destroy');
     });
 
