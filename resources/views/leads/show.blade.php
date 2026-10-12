@@ -260,6 +260,11 @@
             <div class="tab-pane fade" id="lead-tabs-documents" role="tabpanel" aria-labelledby="lead-tabs-documents-tab">
                 <x-card title="Documents" icon="bi-folder-check" description="Files are stored privately and never exposed publicly.">
                     <x-slot:actions>
+                        @if ($lead->documents->count() || $lead->customer?->documents?->count())
+                            <a href="{{ route('leads.export-zip', $lead) }}" class="btn btn-success btn-sm">
+                                <i class="bi bi-file-earmark-zip"></i> Download all (ZIP)
+                            </a>
+                        @endif
                         @can('create', App\Models\Document::class)
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#upload-document-modal">
                                 <i class="bi bi-cloud-arrow-up"></i> Upload document

@@ -84,10 +84,14 @@
                  :action="route('masters.update', [$masterKey, $item->id])" method="PUT" submit-label="Update">
             <div class="row g-3">
                 <div class="col-md-6"><x-input name="name" label="Name" :value="$item->name" required /></div>
-                @foreach ($columns as $column => $label)
-                    @continue($column === 'name')
-                    <div class="col-md-6"><x-input name="{{ $column }}" :label="$label" :value="data_get($item, $column)" /></div>
-                @endforeach
+                @if (! empty($masterConfig['fields']))
+                    @include('masters.partials.fields', ['masterConfig' => $masterConfig, 'item' => $item, 'idPrefix' => 'edit-'.$item->id])
+                @else
+                    @foreach ($columns as $column => $label)
+                        @continue($column === 'name')
+                        <div class="col-md-6"><x-input name="{{ $column }}" :label="$label" :value="data_get($item, $column)" /></div>
+                    @endforeach
+                @endif
                 @if (isset($item->is_active))
                     <div class="col-12">
                         <div class="form-check">

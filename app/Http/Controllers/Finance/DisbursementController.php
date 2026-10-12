@@ -71,16 +71,25 @@ class DisbursementController extends Controller
             ? LoanApplication::query()->ownedBy($request->user())->with(['customer', 'lenders.lender'])->findOrFail($request->integer('loan_application_id'))
             : null;
 
+        // Flow: pick the customer first, then only that customer's APPROVED applications are offered.
+        $customer = $application?->customer
+            ?? ($request->filled('customer_id') ? Customer::query()->find($request->integer('customer_id')) : null);
+
         return view('finance.disbursements.form', [
             'disbursement' => new Disbursement([
                 'disbursement_date' => now()->toDateString(),
                 'status' => 'pending',
                 'mode' => 'neft',
             ]),
-            'applications' => LoanApplication::query()->ownedBy($request->user())
-                ->with('customer')
-                ->whereIn('status', ['approved', 'disbursement-pending'])
-                ->latest()->limit(300)->get(),
+            'customer' => $customer,
+            'customers' => Customer::query()->orderBy('name')->limit(2000)->get(['id', 'name', 'mobile']),
+            'applications' => $customer
+                ? LoanApplication::query()->ownedBy($request->user())
+                    ->with('customer')
+                    ->where('customer_id', $customer->id)
+                    ->whereIn('status', ['approved', 'disbursement-pending'])
+                    ->latest()->limit(300)->get()
+                : collect(),
             'lenders' => Lender::query()->active()->ordered()->get(),
             'application' => $application,
         ]);
@@ -106,9 +115,19 @@ class DisbursementController extends Controller
     {
         $this->authorize('update', $disbursement);
 
+        $customer = $disbursement->customer ?? $disbursement->application?->customer;
+
         return view('finance.disbursements.form', [
             'disbursement' => $disbursement,
-            'applications' => LoanApplication::query()->ownedBy(request()->user())->with('customer')->latest()->limit(300)->get(),
+            'customer' => $customer,
+            'customers' => Customer::query()->orderBy('name')->limit(2000)->get(['id', 'name', 'mobile']),
+            'applications' => $customer
+                ? LoanApplication::query()->ownedBy(request()->user())->with('customer')
+                    ->where('customer_id', $customer->id)
+                    ->where(fn ($q) => $q->whereIn('status', ['approved', 'disbursement-pending'])
+                        ->orWhere('id', $disbursement->loan_application_id))
+                    ->latest()->limit(300)->get()
+                : collect(),
             'lenders' => Lender::query()->active()->ordered()->get(),
             'application' => $disbursement->application,
         ]);

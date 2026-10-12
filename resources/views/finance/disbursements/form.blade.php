@@ -25,9 +25,22 @@
                 <x-section title="Application & lender" icon="bi-clipboard-data">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label" for="loan_application_id">Loan application<span class="req">*</span></label>
-                            <select class="form-select" id="loan_application_id" name="loan_application_id" required>
-                                <option value="">Select application</option>
+                            <label class="form-label" for="customer-search">Customer<span class="req">*</span></label>
+                            <input type="text" class="form-control mb-3" id="customer-search" list="customer-options" autocomplete="off"
+                                   placeholder="Naam ya mobile type karke search karein..."
+                                   value="{{ $customer ? $customer->name.' · '.$customer->mobile : '' }}">
+                            <datalist id="customer-options">
+                                @foreach ($customers as $option)
+                                    <option value="{{ $option->name }} · {{ $option->mobile }}" data-id="{{ $option->id }}"></option>
+                                @endforeach
+                            </datalist>
+
+                            @if ($customer && $applications->isEmpty())
+                                <div class="form-text text-danger mb-2">{{ $customer->name }} ki koi approved application nahi hai. Pehle application approve karein.</div>
+                            @endif
+                            <label class="form-label" for="loan_application_id">Loan application (approved)<span class="req">*</span></label>
+                            <select class="form-select" id="loan_application_id" name="loan_application_id" required @disabled(! $customer)>
+                                <option value="">{{ $customer ? 'Select approved application' : 'Pehle customer select karein' }}</option>
                                 @foreach ($applications as $application)
                                     <option value="{{ $application->id }}"
                                             data-customer="{{ $application->customer_id }}"
@@ -128,6 +141,16 @@
     }
 
     document.querySelectorAll('[data-calc]').forEach((field) => field.addEventListener('input', recalc));
+
+    // Customer-first flow: choosing a customer reloads the page with only that customer's approved applications.
+    document.getElementById('customer-search')?.addEventListener('change', (event) => {
+        const match = [...document.querySelectorAll('#customer-options option')].find((opt) => opt.value === event.target.value);
+        if (!match) return;
+        const url = new URL(window.location.href);
+        url.searchParams.delete('loan_application_id');
+        url.searchParams.set('customer_id', match.dataset.id);
+        window.location.href = url.toString();
+    });
 
     document.getElementById('loan_application_id')?.addEventListener('change', (event) => {
         const option = event.target.selectedOptions[0];
