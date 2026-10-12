@@ -84,6 +84,7 @@ class AttendanceController extends Controller
     public function checkIn(Request $request): RedirectResponse|JsonResponse
     {
         $user = $request->user();
+        abort_if($user->isAdmin(), 403, 'Admin accounts cannot check in or out.');
         $employee = $user->employee;
 
         abort_unless($employee, 403, 'Your account is not linked to an employee profile.');
@@ -123,6 +124,7 @@ class AttendanceController extends Controller
 
     public function checkOut(Request $request): RedirectResponse|JsonResponse
     {
+        abort_if($request->user()->isAdmin(), 403, 'Admin accounts cannot check in or out.');
         $employee = $request->user()->employee;
 
         abort_unless($employee, 403, 'Your account is not linked to an employee profile.');
