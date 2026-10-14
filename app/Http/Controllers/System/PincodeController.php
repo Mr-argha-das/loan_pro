@@ -46,7 +46,10 @@ class PincodeController extends Controller
     private function fetch(string $pincode): ?array
     {
         try {
-            $response = Http::timeout(5)->acceptJson()
+            // Hosting networks sometimes reset the connection; retry twice over IPv4 before giving up.
+            $response = Http::timeout(5)->connectTimeout(3)->acceptJson()
+                ->withOptions(['force_ip_resolve' => 'v4'])
+                ->retry(2, 300)
                 ->get('https://api.postalpincode.in/pincode/'.$pincode);
 
             if (! $response->successful()) {
