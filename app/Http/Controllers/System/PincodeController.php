@@ -4,74 +4,36 @@ namespace App\Http\Controllers\System;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 
 /**
- * Resolves an Indian postal pincode to its city (district) and state so the
- * lead wizard can auto-fill them. Successful lookups are cached for 7 days.
- * Failed lookups (network error, API down, unknown pincode) are NOT cached,
- * so a temporary outage never blocks a pincode for a week. The user can
- * always type city and state manually.
+ * Resolves an Indian postal pincode to its district (city) and state so the
+ * lead wizard can auto-fill them. Lookups use the local dataset in
+ * resources/data/india-pincodes.json (source: saravanakumargn/All-India-Pincode-Directory, MIT),
+ * so there is no external API call and no network dependency at runtime.
  */
 class PincodeController extends Controller
 {
+    /** @var array<string, array{0: string, 1: string}>|null */
+    private static ?array $dataset = null;
+
     public function lookup(string $pincode): JsonResponse
     {
         abort_unless(preg_match('/^[1-9][0-9]{5}$/', $pincode) === 1, 422, 'Enter a valid 6 digit pincode.');
 
-        $key = 'pincode:'.$pincode;
-        $result = Cache::get($key);
-
-        if ($result === null) {
-            $result = $this->fetch($pincode);
-
-            if ($result !== null) {
-                Cache::put($key, $result, now()->addDays(7));
-            }
-        }
+        $entry = self::dataset()[$pincode] ?? null;
 
         return response()->json([
             'success' => true,
-            'found' => $result !== null,
-            'city' => $result['city'] ?? null,
-            'state' => $result['state'] ?? null,
+            'found' => $entry !== null,
+            'city' => $entry[0] ?? null,
+            'state' => $entry[1] ?? null,
         ]);
     }
 
-    /**
-     * @return array{city: ?string, state: ?string}|null
-     */
-    private function fetch(string $pincode): ?array
+    /** @return array<string, array{0: string, 1: string}> */
+    private static function dataset(): array
     {
-        try {
-            // Hosting networks sometimes reset the connection; retry twice over IPv4 before giving up.
-            $response = Http::timeout(5)->connectTimeout(3)->acceptJson()
-                ->withOptions(['force_ip_resolve' => 'v4'])
-                ->retry(2, 300)
-                ->get('https://api.postalpincode.in/pincode/'.$pincode);
-
-            if (! $response->successful()) {
-                Log::warning('Pincode lookup HTTP error', ['pincode' => $pincode, 'status' => $response->status()]);
-
-                return null;
-            }
-
-            $office = $response->json()[0]['PostOffice'][0] ?? null;
-
-            if (! $office) {
-                return null;
-            }
-
-            return [
-                'city' => $office['District'] ?? null,
-                'state' => $office['State'] ?? null,
-            ];
-        } catch (\Throwable $e) {
-            Log::warning('Pincode lookup failed', ['pincode' => $pincode, 'error' => $e->getMessage()]);
-
-            return null;
-        }
+        return self::$dataset ??= File::json(resource_path('data/india-pincodes.json')) ?? [];
     }
 }
