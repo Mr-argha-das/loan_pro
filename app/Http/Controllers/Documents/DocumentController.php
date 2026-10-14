@@ -102,6 +102,21 @@ class DocumentController extends Controller
         return back()->with('success', 'Document replaced successfully.');
     }
 
+    /** Sets or corrects the document type (e.g. PAN, Bank details) of an uploaded file. */
+    public function setType(Request $request, Document $document): RedirectResponse
+    {
+        $this->authorize('setType', $document);
+
+        $data = $request->validate([
+            'document_type_id' => ['required', 'exists:document_types,id'],
+        ]);
+
+        $document->update(['document_type_id' => $data['document_type_id']]);
+        $document->load('documentType');
+
+        return back()->with('success', 'Document type set to '.$document->documentType?->name.'.');
+    }
+
     public function verify(Request $request, Document $document): RedirectResponse|JsonResponse
     {
         $this->authorize('verify', $document);

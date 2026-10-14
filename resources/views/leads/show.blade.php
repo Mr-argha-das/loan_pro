@@ -287,9 +287,30 @@
                             <tbody>
                                 @forelse ($lead->documents as $document)
                                     <tr>
-                                        <td class="fw-semibold">
-                                            {{ $document->typeName() }}
-                                            @if ($document->is_required)<span class="text-danger">*</span>@endif
+                                        <td>
+                                            <div class="fw-semibold">
+                                                @if ($document->documentType)
+                                                    {{ $document->documentType->name }}
+                                                @else
+                                                    <span class="lp-badge bg-warning-subtle text-warning bg-opacity-10">Type not set</span>
+                                                @endif
+                                                @if ($document->is_required)<span class="text-danger">*</span>@endif
+                                            </div>
+                                            <div class="text-muted small">{{ $document->original_name }}</div>
+                                            @if (! $document->documentType)
+                                                @can('setType', $document)
+                                                    <form method="POST" action="{{ route('documents.set-type', $document) }}" class="d-flex gap-1 mt-1">
+                                                        @csrf
+                                                        <select name="document_type_id" class="form-select form-select-sm" required>
+                                                            <option value="">Select type</option>
+                                                            @foreach ($documentTypes as $type)
+                                                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <button class="btn btn-sm btn-primary text-nowrap">Save</button>
+                                                    </form>
+                                                @endcan
+                                            @endif
                                         </td>
                                         <td>{{ $document->issued_number ?? '—' }}</td>
                                         <td><x-status-badge :status="$document->status" /></td>

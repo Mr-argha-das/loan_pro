@@ -173,6 +173,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('{document}/preview', [DocumentController::class, 'preview'])->name('preview');
         Route::get('{document}/download', [DocumentController::class, 'download'])->name('download');
         Route::post('{document}/replace', [DocumentController::class, 'replace'])->name('replace');
+        Route::post('{document}/type', [DocumentController::class, 'setType'])->name('set-type');
         Route::post('{document}/verify', [DocumentController::class, 'verify'])->name('verify');
         Route::post('{document}/reject', [DocumentController::class, 'reject'])->name('reject');
         Route::delete('{document}', [DocumentController::class, 'destroy'])->name('destroy');
