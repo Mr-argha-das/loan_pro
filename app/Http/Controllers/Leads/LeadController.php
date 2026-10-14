@@ -209,16 +209,24 @@ class LeadController extends Controller
 
     protected function handleDocuments(Request $request, Lead $lead): Lead
     {
-        foreach ((array) $request->file('documents', []) as $row) {
-            if (! is_array($row) || empty($row['file'])) {
+        // Files and their metadata (document_type_id, number, expiry) arrive in different bags:
+        // request->file() returns only the uploaded files, so the metadata must be read from input().
+        $inputs = (array) $request->input('documents', []);
+
+        foreach ((array) $request->file('documents', []) as $index => $row) {
+            $file = is_array($row) ? ($row['file'] ?? null) : null;
+
+            if (! $file) {
                 continue;
             }
 
-            $this->documents->store($lead, $row['file'], [
-                'document_type_id' => $row['document_type_id'] ?? null,
-                'is_required' => (bool) ($row['is_required'] ?? false),
-                'issued_number' => $row['issued_number'] ?? null,
-                'expires_at' => $row['expires_at'] ?? null,
+            $meta = (array) ($inputs[$index] ?? []);
+
+            $this->documents->store($lead, $file, [
+                'document_type_id' => $meta['document_type_id'] ?? null,
+                'is_required' => (bool) ($meta['is_required'] ?? false),
+                'issued_number' => $meta['issued_number'] ?? null,
+                'expires_at' => $meta['expires_at'] ?? null,
             ], $request->user());
         }
 
