@@ -260,7 +260,8 @@ class MasterController extends Controller
     /** Unique code for a master record, e.g. "HDFCBANK", "HDFCBANK2" when the name already exists. */
     protected function uniqueCode(string $model, string $name): ?string
     {
-        if (! $this->hasColumn($model, 'code')) {
+        // Lenders get their LND-XXXXXX code from the model's saving hook, so keep one scheme.
+        if (! $this->hasColumn($model, 'code') || is_a($model, \App\Models\Lender::class, true)) {
             return null;
         }
 
