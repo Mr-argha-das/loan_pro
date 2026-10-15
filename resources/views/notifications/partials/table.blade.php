@@ -26,6 +26,26 @@
                                 @if ($notification->url)
                                     <a href="{{ $notification->url }}" class="small">Open record <i class="bi bi-arrow-right"></i></a>
                                 @endif
+                                <details class="mt-1">
+                                    <summary class="small text-primary" style="cursor:pointer">View details</summary>
+                                    <div class="small mt-2">
+                                        <div><strong>Type:</strong> {{ $notification->notification_type ?? '—' }}</div>
+                                        <div><strong>Message:</strong> {{ $notification->message ?? '—' }}</div>
+                                        <div><strong>Received:</strong> {{ $notification->created_at?->format('d M Y, h:i A') ?? '—' }}</div>
+                                        @if (! empty($notification->context()))
+                                            <table class="table table-sm mt-2 mb-0">
+                                                <tbody>
+                                                    @foreach ($notification->context() as $key => $value)
+                                                        <tr>
+                                                            <td class="text-muted text-nowrap">{{ \Illuminate\Support\Str::headline($key) }}</td>
+                                                            <td>{{ is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : (is_bool($value) ? ($value ? 'Yes' : 'No') : ($value ?? '—')) }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        @endif
+                                    </div>
+                                </details>
                             </div>
                         </div>
                     </td>

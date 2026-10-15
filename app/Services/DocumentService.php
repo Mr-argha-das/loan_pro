@@ -53,7 +53,7 @@ class DocumentService
             'document-uploaded',
             'Document uploaded',
             sprintf('%s uploaded %s', $actor->name, $document->typeName()),
-            ['url' => url()->previous(), 'actor_id' => $actor->id]
+            ['url' => $document->targetUrl(), 'actor_id' => $actor->id]
         );
 
         return $document;
@@ -98,7 +98,7 @@ class DocumentService
             'document-verified',
             'Document verified',
             sprintf('%s has been verified', $document->typeName()),
-            ['url' => url()->previous(), 'actor_id' => $actor->id]
+            ['url' => $document->targetUrl(), 'actor_id' => $actor->id]
         );
 
         return $document->refresh();
@@ -119,7 +119,7 @@ class DocumentService
             'document-uploaded',
             'Document rejected',
             sprintf('%s was rejected: %s', $document->typeName(), $reason),
-            ['url' => url()->previous(), 'actor_id' => $actor->id, 'severity' => 'error']
+            ['url' => $document->targetUrl(), 'actor_id' => $actor->id, 'severity' => 'error']
         );
 
         return $document->refresh();

@@ -1,105 +1,117 @@
 @extends('layouts.app')
 
-@php $isEdit = $payment->exists; @endphp
+@php $isEdit = $payout->exists; @endphp
 
-@section('title', $isEdit ? 'Edit '.$payment->payment_code : 'Record Payment')
+@section('title', $isEdit ? 'Edit payment' : 'Add payment')
 @section('page-header', true)
-@section('page-title', $isEdit ? 'Edit payment '.$payment->payment_code : 'Record a payment')
-@section('page-subtitle', 'Every collection is linked to an invoice so balances update automatically.')
+@section('page-title', $isEdit ? 'Edit payment '.$payout->payout_code : 'Add employee payment')
+@section('page-subtitle', 'Approved leads and coins are calculated automatically for the selected month.')
 
 @section('breadcrumb')
     <li class="breadcrumb-item"><a href="{{ route('payments.index') }}">Payments</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ $isEdit ? 'Edit' : 'Create' }}</li>
+    <li class="breadcrumb-item active" aria-current="page">{{ $isEdit ? 'Edit' : 'Add' }}</li>
 @endsection
 
 @section('content')
-    <form method="POST" action="{{ $isEdit ? route('payments.update', $payment) : route('payments.store') }}" novalidate>
+    <form method="POST" action="{{ $isEdit ? route('payments.update', $payout) : route('payments.store') }}" id="payout-form">
         @csrf
         @if ($isEdit) @method('PUT') @endif
 
-        <div class="row g-4">
-            <div class="col-lg-8">
-                <x-section title="Payment details" icon="bi-wallet2">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="customer_id">Customer<span class="req">*</span></label>
-                            <select class="form-select" id="customer_id" name="customer_id" required>
-                                <option value="">Select customer</option>
-                                @foreach ($customers as $customer)
-                                    <option value="{{ $customer->id }}" @selected((int) old('customer_id', $payment->customer_id) === $customer->id)>
-                                        {{ $customer->name }} — {{ $customer->mobile }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="invoice_id">Invoice</label>
-                            <select class="form-select" id="invoice_id" name="invoice_id">
-                                <option value="">No invoice (advance receipt)</option>
-                                @foreach ($invoices as $invoice)
-                                    <option value="{{ $invoice->id }}" data-balance="{{ $invoice->balance_amount }}"
-                                            @selected((int) old('invoice_id', $payment->invoice_id) === $invoice->id)>
-                                        {{ $invoice->invoice_number }} — balance {{ \App\Support\Format::money($invoice->balance_amount) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-4"><x-input name="amount" label="Amount" type="number" step="0.01" min="0" :value="old('amount', $payment->amount)" required icon="bi-currency-rupee" /></div>
-                        <div class="col-md-4"><x-input name="payment_date" label="Payment date" type="date" :value="old('payment_date', $payment->payment_date?->toDateString() ?? now()->toDateString())" required /></div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="payment_method_id">Payment mode<span class="req">*</span></label>
-                            <select class="form-select" id="payment_method_id" name="payment_method_id" required>
-                                @foreach ($methods as $method)
-                                    <option value="{{ $method->id }}" @selected((int) old('payment_method_id', $payment->payment_method_id) === $method->id)>{{ $method->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-4"><x-input name="transaction_id" label="Transaction / UTR" :value="old('transaction_id', $payment->transaction_id)" /></div>
-                        <div class="col-md-4"><x-input name="reference_number" label="Reference number" :value="old('reference_number', $payment->reference_number)" /></div>
-                        <div class="col-md-4"><x-input name="bank_name" label="Bank name" :value="old('bank_name', $payment->bank_name)" /></div>
-
-                        <div class="col-md-4"><x-input name="cheque_number" label="Cheque number" :value="old('cheque_number', $payment->cheque_number)" /></div>
-                        <div class="col-md-4"><x-input name="cheque_date" label="Cheque date" type="date" :value="old('cheque_date', $payment->cheque_date?->toDateString())" /></div>
-                        <div class="col-md-4">
-                            <x-select name="status" label="Status" :options="['pending' => 'Pending', 'completed' => 'Completed', 'failed' => 'Failed', 'refunded' => 'Refunded']"
-                                      :value="old('status', $payment->status ?? 'completed')" />
-                        </div>
-
-                        <div class="col-12"><x-textarea name="remarks" label="Remarks" rows="2" :value="old('remarks', $payment->remarks)" /></div>
-                    </div>
-                </x-section>
-            </div>
-
-            <div class="col-lg-4">
-                <x-section title="Guidance" icon="bi-info-circle">
-                    <ul class="small text-muted ps-3 mb-0">
-                        <li class="mb-2">Selecting an invoice pre-fills the outstanding balance.</li>
-                        <li class="mb-2">Part payments are supported — the invoice moves to <strong>Partially Paid</strong> until settled.</li>
-                        <li>Cheque payments should stay <strong>Pending</strong> until realisation.</li>
-                    </ul>
-                </x-section>
-
-                <div class="d-flex gap-2">
-                    <a href="{{ route('payments.index') }}" class="btn btn-outline-secondary flex-grow-1">Cancel</a>
-                    <button class="btn btn-primary flex-grow-1"><i class="bi bi-check2"></i> {{ $isEdit ? 'Update' : 'Save payment' }}</button>
+        <x-section title="Employee & month" icon="bi-person-badge" description="Pick the employee and the month the payout is for.">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="employee_id">Employee<span class="req">*</span></label>
+                    <select class="form-select" id="employee_id" name="employee_id" required data-employee>
+                        <option value="">Select employee</option>
+                        @foreach ($employees as $employee)
+                            <option value="{{ $employee->id }}" @selected(old('employee_id', $payout->employee_id) == $employee->id)>
+                                {{ $employee->user?->name ?? $employee->employee_code }} · {{ $employee->employee_code }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="payout_month">Month<span class="req">*</span></label>
+                    <input type="month" class="form-control" id="payout_month" name="payout_month" required
+                           value="{{ $payout->payout_month?->format('Y-m') ?? now()->format('Y-m') }}" data-month>
+                </div>
+                <div class="col-md-5 d-flex align-items-end">
+                    <div class="text-muted small" data-figures-hint>Choose an employee to load the approved leads for the month.</div>
                 </div>
             </div>
+        </x-section>
+
+        <x-section title="Amount" icon="bi-calculator" description="Salary and coins come from the employee record and approved leads; enter the incentive.">
+            <div class="row g-3">
+                <div class="col-md-2"><label class="form-label">Total leads (approved)</label><input class="form-control" value="{{ $payout->approved_leads }}" readonly data-approved-leads></div>
+                <div class="col-md-2"><label class="form-label">Coins per lead</label><input class="form-control" value="{{ number_format((float) $payout->coins_per_lead, 2, '.', '') }}" readonly data-coins-per-lead></div>
+                <div class="col-md-2"><label class="form-label">Total coins</label><input class="form-control" value="{{ number_format((float) $payout->total_coins, 2, '.', '') }}" readonly data-total-coins></div>
+                <div class="col-md-3"><label class="form-label">Monthly salary</label><input class="form-control" value="{{ number_format((float) $payout->monthly_salary, 2, '.', '') }}" readonly data-salary></div>
+                <div class="col-md-3">
+                    <label class="form-label" for="incentive_amount">Incentive (admin amount)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" id="incentive_amount" name="incentive_amount"
+                           value="{{ old('incentive_amount', (float) $payout->incentive_amount) }}" data-incentive>
+                </div>
+                <div class="col-md-3"><label class="form-label">Total amount</label><input class="form-control fw-semibold" readonly data-total value="{{ number_format((float) $payout->total_amount, 2, '.', '') }}"></div>
+                <div class="col-md-3">
+                    <label class="form-label" for="status">Status</label>
+                    <select class="form-select" id="status" name="status" required>
+                        @foreach (\App\Models\EmployeePayout::STATUSES as $value => $label)
+                            <option value="{{ $value }}" @selected(old('status', $payout->status) === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="paid_on">Paid on</label>
+                    <input type="date" class="form-control" id="paid_on" name="paid_on" value="{{ old('paid_on', $payout->paid_on?->format('Y-m-d')) }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="notes">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="2">{{ old('notes', $payout->notes) }}</textarea>
+                </div>
+            </div>
+        </x-section>
+
+        <div class="d-flex justify-content-between">
+            <a href="{{ route('payments.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+            <button type="submit" class="btn btn-primary">Save payment</button>
         </div>
     </form>
 @endsection
 
 @push('scripts')
 <script type="module">
-    const invoice = document.getElementById('invoice_id');
-    const amount = document.querySelector('[name="amount"]');
+    const form = document.getElementById('payout-form');
+    const employee = form.querySelector('[data-employee]');
+    const month = form.querySelector('[data-month]');
+    const incentive = form.querySelector('[data-incentive]');
+    const total = form.querySelector('[data-total]');
+    const money = (value) => (Number(value) || 0).toFixed(2);
 
-    invoice?.addEventListener('change', () => {
-        const balance = invoice.selectedOptions[0]?.dataset.balance;
-        if (balance && amount && !amount.value) {
-            amount.value = balance;
-        }
-    });
+    const recalc = () => {
+        const salary = Number(form.querySelector('[data-salary]').value) || 0;
+        total.value = money(salary + (Number(incentive.value) || 0));
+    };
+
+    async function loadFigures() {
+        if (!employee.value || !month.value) return;
+
+        const query = new URLSearchParams({ employee_id: employee.value, payout_month: month.value });
+        const payload = await LoanPro.request(`{{ route('payments.summary') }}?${query}`);
+        const f = payload.figures;
+
+        form.querySelector('[data-approved-leads]').value = f.approved_leads;
+        form.querySelector('[data-coins-per-lead]').value = money(f.coins_per_lead);
+        form.querySelector('[data-total-coins]').value = money(f.total_coins);
+        form.querySelector('[data-salary]').value = money(f.monthly_salary);
+        form.querySelector('[data-figures-hint]').textContent =
+            `${f.approved_leads} approved lead(s) in ${month.value}.`;
+        recalc();
+    }
+
+    employee.addEventListener('change', loadFigures);
+    month.addEventListener('change', loadFigures);
+    incentive.addEventListener('input', recalc);
+    recalc();
 </script>
 @endpush

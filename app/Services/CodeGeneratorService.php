@@ -15,12 +15,12 @@ class CodeGeneratorService
 {
     public function lead(): string
     {
-        return $this->generate('LD', 'leads', 'lead_code');
+        return $this->generate('LD', 'leads', 'lead_code', 8, 'ym');
     }
 
     public function customer(): string
     {
-        return $this->generate('CU', 'customers', 'customer_code', 5);
+        return $this->generate('CU', 'customers', 'customer_code', 4, 'ym');
     }
 
     public function application(string $prefix = 'AP'): string
@@ -35,12 +35,17 @@ class CodeGeneratorService
 
     public function invoice(): string
     {
-        return $this->generate('INV', 'invoices', 'invoice_number');
+        return $this->generate('INV', 'invoices', 'invoice_number', 4, 'ym');
     }
 
     public function payment(): string
     {
         return $this->generate('PAY', 'payments', 'payment_code', 5);
+    }
+
+    public function payout(): string
+    {
+        return $this->generate('PO', 'employee_payouts', 'payout_code', 4);
     }
 
     public function disbursement(): string
@@ -53,9 +58,13 @@ class CodeGeneratorService
         return $this->generate('EMP', 'employees', 'employee_code', 4);
     }
 
-    protected function generate(string $prefix, string $table, string $column, int $padLength = 4): string
+    /**
+     * Builds codes like LD + YYMM + sequence (LD26100001) when $dateFormat is 'ym',
+     * or LD + YYYYMMDD + sequence (LD202610090001) for the default 'Ymd' format.
+     */
+    protected function generate(string $prefix, string $table, string $column, int $padLength = 4, string $dateFormat = 'Ymd'): string
     {
-        $datePart = now()->format('Ymd');
+        $datePart = now()->format($dateFormat);
 
         for ($attempt = 0; $attempt < 10; $attempt++) {
             $sequence = $this->nextSequence($table, $column, $prefix.$datePart);

@@ -92,22 +92,6 @@ class GlobalSearchController extends Controller
         }
 
         if ($user->hasPermissionTo('payments.view')) {
-            $groups[] = [
-                'label' => 'Payments',
-                'icon' => 'bi-cash-stack',
-                'items' => Payment::query()->ownedBy($user)
-                    ->where(fn ($q) => $q->where('payment_code', 'like', "%{$term}%")
-                        ->orWhere('transaction_id', 'like', "%{$term}%")
-                        ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$term}%")))
-                    ->limit(5)->get()
-                    ->map(fn (Payment $payment) => [
-                        'title' => $payment->payment_code,
-                        'subtitle' => $payment->customer?->name.' • '.\App\Support\Format::money($payment->amount),
-                        'url' => route('payments.show', $payment),
-                        'badge' => \App\Support\StatusBadge::label($payment->status),
-                        'color' => $payment->statusColor(),
-                    ])->all(),
-            ];
         }
 
         return response()->json([

@@ -1,30 +1,43 @@
-@php $customer = $lead->customer; @endphp
-
-<x-section title="Professional Information" icon="bi-briefcase" description="Employment and income details used for eligibility checks.">
+<x-section title="Loan & Insurance Requirement" icon="bi-cash-coin" description="Product, category and purpose the customer needs.">
     <div class="row g-3">
         <div class="col-md-4">
-            <x-select name="employment_type_id" label="Employment type" :options="$employmentTypes" :value="$customer?->employment_type_id"
-                      placeholder="Select employment type" />
+            <x-select name="product_id" label="Product" required :options="$products" :value="$lead?->product_id" placeholder="Select product" data-product-select />
         </div>
-        <div class="col-md-4"><x-input name="company_name" label="Employer / Business name" :value="$customer?->company_name" /></div>
-        <div class="col-md-4"><x-input name="designation" label="Designation" :value="$customer?->designation" /></div>
+        <div class="col-md-4">
+            <label class="form-label" for="product_category_id">Category<span class="req" aria-hidden="true">*</span></label>
+            <select class="form-select" id="product_category_id" name="product_category_id" required data-category-select>
+                <option value="">Select category</option>
+                @foreach ($allCategories as $category)
+                    <option value="{{ $category->id }}" data-product="{{ $category->product_id }}" @selected(($lead?->product_category_id ?? old('product_category_id')) == $category->id)>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="product_subcategory_id">Purpose / Sub category</label>
+            <select class="form-select" id="product_subcategory_id" name="product_subcategory_id">
+                <option value="">Select purpose</option>
+                @foreach ($subcategories as $subcategory)
+                    <option value="{{ $subcategory->id }}" data-category="{{ $subcategory->product_category_id }}"
+                            @selected(($lead?->product_subcategory_id ?? old('product_subcategory_id')) == $subcategory->id)>
+                        {{ $subcategory->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
 
         <div class="col-md-3">
-            <x-input name="monthly_income" label="Monthly income" type="number" step="1000" :value="$customer?->monthly_income" icon="bi-currency-rupee" />
+            <x-input name="loan_amount" label="Required amount" type="number" step="1000" required :value="$lead?->loan_amount" icon="bi-currency-rupee" />
         </div>
         <div class="col-md-3">
-            <x-input name="work_experience_years" label="Total experience (years)" type="number" :value="$customer?->work_experience_years" />
+            <x-input name="tenure_months" label="Preferred tenure (months)" type="number" required :value="$lead?->tenure_months ?? 36" />
         </div>
-        <div class="col-md-3">
-            <x-input name="existing_emi" label="Existing EMI obligations" type="number" step="500" :value="$lead?->existing_emi" icon="bi-currency-rupee" />
-        </div>
-        <div class="col-md-3">
-            <x-input name="credit_score" label="Credit score" type="number" min="300" max="900" :value="$lead?->credit_score" />
-        </div>
+    </div>
 
-        <div class="col-12">
-            <x-textarea name="office_address" label="Office address" rows="2" :value="$customer?->office_address" />
-        </div>
+    <div class="alert alert-secondary small mt-3 mb-0 d-flex gap-2">
+        <i class="bi bi-lightbulb"></i>
+        <div>Lender eligibility, EMI and ROI are calculated from the live lender product master in the next step.</div>
     </div>
 </x-section>
 

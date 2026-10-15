@@ -74,20 +74,6 @@
             </a>
         @endif
 
-        @if ($user->hasPermissionTo('applications.view'))
-            <div class="lp-nav__section">Lending</div>
-
-            <a href="{{ route('applications.index') }}" class="lp-nav__link {{ $is(['applications.']) ? 'active' : '' }}">
-                <i class="bi bi-clipboard-check"></i><span class="lp-nav__label">Loan Applications</span>
-            </a>
-        @endif
-
-        @if ($user->hasPermissionTo('insurance.view'))
-            <a href="{{ route('insurance.index') }}" class="lp-nav__link {{ $is(['insurance.']) ? 'active' : '' }}">
-                <i class="bi bi-umbrella"></i><span class="lp-nav__label">Insurance</span>
-            </a>
-        @endif
-
         @if ($user->hasPermissionTo('disbursements.view'))
             <a href="{{ route('disbursements.index') }}" class="lp-nav__link {{ $is(['disbursements.']) ? 'active' : '' }}">
                 <i class="bi bi-cash-stack"></i><span class="lp-nav__label">Disbursements</span>
@@ -107,12 +93,6 @@
         @if ($user->hasPermissionTo('payments.view'))
             <a href="{{ route('payments.index') }}" class="lp-nav__link {{ $is(['payments.']) ? 'active' : '' }}">
                 <i class="bi bi-cash-coin"></i><span class="lp-nav__label">Payments</span>
-            </a>
-        @endif
-
-        @if ($user->hasPermissionTo('documents.upload'))
-            <a href="{{ route('documents.index') }}" class="lp-nav__link {{ $is(['documents.']) ? 'active' : '' }}">
-                <i class="bi bi-folder2-open"></i><span class="lp-nav__label">Documents</span>
             </a>
         @endif
 

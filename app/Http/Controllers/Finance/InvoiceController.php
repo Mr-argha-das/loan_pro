@@ -11,7 +11,6 @@ use App\Models\PaymentMethod;
 use App\Models\Setting;
 use App\Services\ExportService;
 use App\Services\InvoiceService;
-use App\Services\PaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +21,6 @@ class InvoiceController extends Controller
 {
     public function __construct(
         protected InvoiceService $invoices,
-        protected PaymentService $payments,
     ) {
     }
 

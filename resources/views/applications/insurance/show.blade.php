@@ -54,7 +54,7 @@
                         <tbody>
                             @forelse ($application->documents as $document)
                                 <tr>
-                                    <td class="fw-semibold">{{ $document->documentType?->name ?? 'Document' }}</td>
+                                    <td class="fw-semibold">{{ $document->typeName() }}</td>
                                     <td><x-status-badge :status="$document->status" /></td>
                                     <td class="text-muted text-nowrap">{{ \App\Support\Format::date($document->created_at) }}</td>
                                     <td class="text-end">

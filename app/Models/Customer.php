@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -26,7 +27,7 @@ class Customer extends Model
         'customer_type', 'occupation', 'city', 'state', 'pincode', 'address', 'employment_type_id',
         'company_name', 'designation', 'monthly_income', 'annual_income', 'work_experience_years',
         'office_address', 'assigned_employee_id', 'created_by', 'status', 'kyc_status', 'notes',
-        'last_contacted_at',
+        'last_contacted_at', 'gst_treatment', 'gstin', 'gst_legal_name', 'gst_trade_name', 'place_of_supply',
     ];
 
     protected $casts = [
@@ -64,6 +65,12 @@ class Customer extends Model
     public function leads(): HasMany
     {
         return $this->hasMany(Lead::class);
+    }
+
+    /** Most recent lead of the customer (its status drives the customer list). */
+    public function latestLead(): HasOne
+    {
+        return $this->hasOne(Lead::class)->latestOfMany();
     }
 
     /** Alias used by the CRM profile tabs. */

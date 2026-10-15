@@ -4,6 +4,6 @@
     @endif
 @endforeach
 
-@if ($errors->any())
+@if (isset($errors) && $errors->any())
     <span data-flash="danger" data-message="{{ $errors->first() }}" hidden></span>
 @endif

@@ -40,7 +40,7 @@ class ApplicationStatus extends Model
 
     public function scopeOrdered(Builder $query): Builder
     {
-        return $query->orderBy('sort_order')->orderBy('name');
+        return $query->orderBy('stage_order')->orderBy('name');
     }
 
     public function isActive(): bool

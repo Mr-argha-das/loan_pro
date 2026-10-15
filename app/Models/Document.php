@@ -97,4 +97,18 @@ class Document extends Model
     {
         return $this->documentType?->name ?? Str::headline(str_replace('_', ' ', (string) $this->original_name));
     }
+
+    /**
+     * Page a document belongs to (lead, customer or application). Used as the
+     * notification link so it always resolves to an existing screen.
+     */
+    public function targetUrl(): string
+    {
+        return match (true) {
+            $this->documentable instanceof \App\Models\Lead => route('leads.show', $this->documentable),
+            $this->documentable instanceof \App\Models\Customer => route('customers.show', $this->documentable),
+            $this->documentable instanceof \App\Models\LoanApplication => route('applications.show', $this->documentable),
+            default => route('documents.index'),
+        };
+    }
 }

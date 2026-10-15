@@ -19,8 +19,7 @@
             <x-input name="name" label="Full name" :value="$customer?->name" required placeholder="e.g. Rohit Sharma" />
         </div>
         <div class="col-md-4">
-            <x-input name="mobile" label="Mobile number" :value="$customer?->mobile" required maxlength="10"
-                     help="A 6-digit OTP will be sent to this number in the next step." />
+            <x-input name="mobile" label="Mobile number" :value="$customer?->mobile" required maxlength="10" />
         </div>
 
         <div class="col-md-4">

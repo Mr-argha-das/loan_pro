@@ -1,66 +1,23 @@
-@php
-    $existing = $lead?->documents?->keyBy('document_type_id') ?? collect();
-@endphp
-
-<x-section title="KYC & Documents" icon="bi-folder-check"
-           description="Upload any documents you already have — you can add the rest later from the lead page.">
-    <div class="alert alert-info d-flex gap-2 small mb-4">
-        <i class="bi bi-shield-lock"></i>
-        <div>Files are stored privately and streamed only to authorised users. Accepted formats: PDF, JPG, JPEG, PNG (max 5 MB each).</div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-md-12">
-            <label class="form-label" for="document_type_id">Document type</label>
-            <select class="form-select" id="document_type_id" name="documents[0][document_type_id]">
-                <option value="">Select document type</option>
-                @foreach ($documentTypes as $type)
-                    <option value="{{ $type->id }}" @selected(($type->is_required_default ?? false))>
-                        {{ $type->name }}{{ $type->is_required_default ? ' (required)' : '' }}
-                    </option>
-                @endforeach
-            </select>
+<x-section title="Lender Selection" icon="bi-bank" description="Compare partner lenders and pick the products to submit.">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="small text-muted">
+            <i class="bi bi-funnel"></i>
+            Showing only the lenders whose income range matches this customer's monthly income
+            <strong>{{ $lead?->customer?->monthly_income ? \App\Support\Format::money($lead->customer->monthly_income) : 'not captured' }}</strong>.
         </div>
-
-        <div class="col-md-6">
-            <x-file-uploader name="documents[0][file]" label="Choose file" />
+        <div class="d-flex align-items-center gap-2">
+            <span class="lp-badge bg-primary-subtle text-primary bg-opacity-10" title="Lenders matching this customer">
+                <i class="bi bi-bank"></i> <span id="lender-count">0</span> matched
+            </span>
+            <span class="lp-badge bg-success-subtle text-success bg-opacity-10" title="Shortlisted so far">
+                <i class="bi bi-check2"></i> <span id="lender-selected-count">{{ $selectedLenders?->count() ?? 0 }}</span> selected
+            </span>
         </div>
-        <div class="col-md-3"><x-input name="documents[0][issued_number]" label="Document number" placeholder="Optional" /></div>
-        <div class="col-md-3"><x-input name="documents[0][expires_at]" label="Expiry date" type="date" /></div>
     </div>
 
-    <div class="lp-divider"></div>
+    <div class="row g-3" id="lender-results"></div>
 
-    <div class="fw-semibold mb-2">Uploaded documents</div>
-    <div class="table-responsive">
-        <table class="lp-table">
-            <thead>
-                <tr>
-                    <th scope="col">Document</th>
-                    <th scope="col">Number</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Uploaded</th>
-                    <th scope="col" class="text-end">File</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($existing as $document)
-                    <tr>
-                        <td class="fw-semibold">{{ $document->documentType?->name ?? 'Document' }}</td>
-                        <td>{{ $document->issued_number ?? '—' }}</td>
-                        <td><x-status-badge :status="$document->status" /></td>
-                        <td class="text-muted">{{ $document->created_at?->format('d M Y') }}</td>
-                        <td class="text-end">
-                            <a href="{{ route('documents.preview', $document) }}" target="_blank" rel="noopener" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a>
-                            <a href="{{ route('documents.download', $document) }}" class="btn btn-sm btn-light"><i class="bi bi-download"></i></a>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5"><x-empty-state icon="bi-folder2-open" title="No documents uploaded yet" message="Use the form above to upload the first document." /></td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+    <div id="lender-hidden-inputs"></div>
 </x-section>
 
 <div class="d-flex justify-content-between">

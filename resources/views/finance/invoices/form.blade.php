@@ -26,7 +26,12 @@
                             <select class="form-select" id="customer_id" name="customer_id" required>
                                 <option value="">Select customer</option>
                                 @foreach ($customers as $customer)
-                                    <option value="{{ $customer->id }}" @selected((int) $invoice->customer_id === $customer->id)>
+                                    <option value="{{ $customer->id }}" @selected((int) $invoice->customer_id === $customer->id)
+                                            data-name="{{ $customer->name }}" data-mobile="{{ $customer->mobile }}"
+                                            data-address="{{ collect([$customer->address, $customer->city, $customer->state, $customer->pincode])->filter()->implode(', ') }}"
+                                            data-gst-treatment="{{ $customer->gst_treatment }}" data-gstin="{{ $customer->gstin }}"
+                                            data-legal-name="{{ $customer->gst_legal_name }}" data-trade-name="{{ $customer->gst_trade_name }}"
+                                            data-place-of-supply="{{ $customer->place_of_supply }}" data-pan="{{ $customer->pan_number }}">
                                         {{ $customer->name }} — {{ $customer->mobile }}
                                     </option>
                                 @endforeach
@@ -54,6 +59,30 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
+                </x-section>
+
+                <x-section title="Customer & GST details" icon="bi-person-vcard"
+                           description="Selecting a customer fills these in automatically. Edit them only if the invoice needs different details.">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label" for="bill_name">Customer name</label><input type="text" class="form-control" id="bill_name" readonly data-bill="name"></div>
+                        <div class="col-md-6"><label class="form-label" for="bill_mobile">Mobile</label><input type="text" class="form-control" id="bill_mobile" readonly data-bill="mobile"></div>
+                        <div class="col-12"><label class="form-label" for="bill_address">Address</label><input type="text" class="form-control" id="bill_address" readonly data-bill="address"></div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" for="gst_treatment">GST treatment</label>
+                            <select class="form-select" id="gst_treatment" name="gst_treatment" data-gst="gst_treatment">
+                                <option value="">Select treatment</option>
+                                @foreach (['Registered Business - Regular', 'Registered Business - Composition', 'Unregistered Business', 'Consumer', 'Overseas'] as $treatment)
+                                    <option value="{{ $treatment }}" @selected(($invoice->gst_treatment ?? '') === $treatment)>{{ $treatment }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4"><x-input name="gstin" label="GSTIN / UIN" :value="$invoice->gstin" maxlength="15" data-gst="gstin" /></div>
+                        <div class="col-md-4"><x-input name="pan_number" label="PAN" :value="$invoice->pan_number" maxlength="10" data-gst="pan" /></div>
+                        <div class="col-md-6"><x-input name="gst_legal_name" label="Business legal name" :value="$invoice->gst_legal_name" data-gst="legal" /></div>
+                        <div class="col-md-6"><x-input name="gst_trade_name" label="Business trade name" :value="$invoice->gst_trade_name" data-gst="trade" /></div>
+                        <div class="col-md-6"><x-input name="place_of_supply" label="Place of supply" :value="$invoice->place_of_supply" data-gst="place" /></div>
                     </div>
                 </x-section>
 
@@ -116,7 +145,6 @@
                     <div class="row g-3">
                         <div class="col-6"><x-input name="discount" label="Discount" type="number" step="0.01" :value="$invoice->discount ?? 0" icon="bi-currency-rupee" /></div>
                         <div class="col-6"><x-input name="tax_rate" label="Default tax %" type="number" step="0.01" :value="$invoice->tax_rate ?? 18" /></div>
-                        <div class="col-12"><x-input name="place_of_supply" label="Place of supply" :value="$invoice->place_of_supply" /></div>
                     </div>
 
                     <div class="lp-divider"></div>
@@ -195,5 +223,34 @@
     body.addEventListener('input', recalc);
     document.querySelector('[name="discount"]')?.addEventListener('input', recalc);
     recalc();
+</script>
+@endpush
+
+@push('scripts')
+<script type="module">
+    /* Customer selection fills the bill-to block and GST fields from the customer record. */
+    const customerSelect = document.getElementById('customer_id');
+    const field = (key) => document.querySelector(`[data-gst="${key}"]`);
+    const bill = (key) => document.querySelector(`[data-bill="${key}"]`);
+
+    customerSelect?.addEventListener('change', () => {
+        const option = customerSelect.selectedOptions[0];
+        if (!option || !option.value) return;
+
+        const d = option.dataset;
+        const gstin = (d.gstin || '').toUpperCase();
+
+        bill('name').value = d.name ?? '';
+        bill('mobile').value = d.mobile ?? '';
+        bill('address').value = d.address ?? '';
+
+        field('gst_treatment').value = d.gstTreatment || field('gst_treatment').value;
+        field('gstin').value = gstin;
+        // PAN is the 10 characters after the 2-digit state code in a GSTIN.
+        field('pan').value = (d.pan || (gstin.length === 15 ? gstin.substring(2, 12) : '')).toUpperCase();
+        field('legal').value = d.legalName ?? '';
+        field('trade').value = d.tradeName ?? '';
+        field('place').value = d.placeOfSupply ?? '';
+    });
 </script>
 @endpush

@@ -32,6 +32,12 @@ class DocumentPolicy
         return $user->hasPermissionTo('documents.upload') && $this->owns($user, $document, 'uploaded_by', null);
     }
 
+    /** Assigning or correcting the document type (e.g. PAN, Bank details) of an uploaded file. */
+    public function setType(User $user, Document $document): bool
+    {
+        return $user->hasPermissionTo('documents.upload');
+    }
+
     public function verify(User $user, Document $document): bool
     {
         return $user->hasPermissionTo('documents.verify');

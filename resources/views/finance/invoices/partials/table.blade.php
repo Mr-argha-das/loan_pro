@@ -45,9 +45,6 @@
                                 @can('update', $invoice)
                                     <li><a class="dropdown-item" href="{{ route('invoices.edit', $invoice) }}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
                                 @endcan
-                                @canPermission('payments.create')
-                                    <li><a class="dropdown-item" href="{{ route('payments.create', ['invoice_id' => $invoice->id]) }}"><i class="bi bi-wallet2 me-2"></i>Record payment</a></li>
-                                @endcanPermission
                                 @can('delete', $invoice)
                                     <li><hr class="dropdown-divider"></li>
                                     <li>

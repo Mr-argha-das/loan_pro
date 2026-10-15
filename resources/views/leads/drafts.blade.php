@@ -29,7 +29,7 @@
 
                         <div class="lp-kv"><span class="lp-kv__label">Category</span><span class="lp-kv__value">{{ $draft->category?->name ?? '—' }}</span></div>
                         <div class="lp-kv"><span class="lp-kv__label">Amount</span><span class="lp-kv__value">{{ \App\Support\Format::money($draft->loan_amount) }}</span></div>
-                        <div class="lp-kv"><span class="lp-kv__label">Last step</span><span class="lp-kv__value">{{ $draft->current_step }}/10 &middot; {{ $draft->stepName() }}</span></div>
+                        <div class="lp-kv"><span class="lp-kv__label">Last step</span><span class="lp-kv__value">{{ $draft->current_step }}/{{ \App\Models\Lead::LAST_STEP }} &middot; {{ $draft->stepName() }}</span></div>
                         <div class="lp-kv"><span class="lp-kv__label">Last activity</span><span class="lp-kv__value">{{ $draft->last_activity_at?->diffForHumans() ?? '—' }}</span></div>
 
                         <div class="progress mt-3" role="progressbar" aria-valuenow="{{ $draft->progressPercent() }}" aria-valuemin="0" aria-valuemax="100">

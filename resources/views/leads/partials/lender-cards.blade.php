@@ -56,6 +56,6 @@
     </div>
 @empty
     <div class="col-12">
-        <x-empty-state icon="bi-bank" title="No lenders match these filters" message="Try relaxing the loan type or category filter." />
+        <x-empty-state icon="bi-bank" title="No lenders match this customer" message="Lenders are shown only when the customer's monthly income falls inside their income band. Check the monthly income in step 4, or relax the loan type / category filter." />
     </div>
 @endforelse

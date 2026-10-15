@@ -26,6 +26,30 @@ class Lender extends Model
         'max_ticket_size' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        // `code` is NOT NULL + unique in the DB. When the admin leaves it blank, generate one;
+        // on edit, keep the existing code so a blank field never wipes it.
+        static::saving(function (Lender $lender) {
+            if (filled($lender->code)) {
+                return;
+            }
+
+            $lender->code = $lender->exists
+                ? $lender->getOriginal('code')
+                : self::generateCode();
+        });
+    }
+
+    protected static function generateCode(): string
+    {
+        do {
+            $code = 'LND-'.strtoupper(\Illuminate\Support\Str::random(6));
+        } while (static::withTrashed()->where('code', $code)->exists());
+
+        return $code;
+    }
+
     public function products(): HasMany
     {
         return $this->hasMany(LenderProduct::class)->orderBy('product_name');

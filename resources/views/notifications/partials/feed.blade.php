@@ -1,5 +1,5 @@
 @forelse ($notifications as $notification)
-    <a href="{{ route('notifications.read', $notification) }}" class="d-flex gap-3 px-3 py-2 border-bottom text-decoration-none {{ $notification->read_at ? 'opacity-75' : '' }}">
+    <a href="{{ route('notifications.open', $notification) }}" class="d-flex gap-3 px-3 py-2 border-bottom text-decoration-none {{ $notification->read_at ? 'opacity-75' : '' }}">
         <span class="lp-tone-{{ $notification->color ?? 'primary' }} rounded-circle d-grid flex-shrink-0" style="width:36px;height:36px;place-items:center">
             <i class="bi bi-{{ $notification->icon ?? 'bell' }}"></i>
         </span>

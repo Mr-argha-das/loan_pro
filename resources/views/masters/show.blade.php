@@ -58,10 +58,14 @@
                     @csrf
                     <div class="row g-2 align-items-end">
                         <div class="col-md-4"><x-input name="name" label="Name" required /></div>
-                        @foreach ($masterConfig['columns'] as $column => $label)
-                            @continue(in_array($column, ['name', 'slug', 'code'], true))
-                            <div class="col-md-2"><x-input name="{{ $column }}" :label="$label" /></div>
-                        @endforeach
+                        @if (! empty($masterConfig['fields']))
+                            @include('masters.partials.fields', ['masterConfig' => $masterConfig, 'item' => null, 'idPrefix' => 'new'])
+                        @else
+                            @foreach ($masterConfig['columns'] as $column => $label)
+                                @continue(in_array($column, ['name', 'slug', 'code'], true))
+                                <div class="col-md-2"><x-input name="{{ $column }}" :label="$label" /></div>
+                            @endforeach
+                        @endif
                         @if (! empty($related['products']))
                             <div class="col-md-3">
                                 <label class="form-label" for="new-product_id">Product</label>

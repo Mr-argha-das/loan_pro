@@ -36,6 +36,8 @@
                 <div class="lp-kv"><span class="lp-kv__label">Role</span><span class="lp-kv__value">{{ $employee->user?->role?->name ?? '—' }}</span></div>
                 <div class="lp-kv"><span class="lp-kv__label">Joined</span><span class="lp-kv__value">{{ \App\Support\Format::date($employee->joining_date) }}</span></div>
                 <div class="lp-kv"><span class="lp-kv__label">Monthly target</span><span class="lp-kv__value">{{ \App\Support\Format::money($employee->monthly_target) }}</span></div>
+                <div class="lp-kv"><span class="lp-kv__label">Monthly salary</span><span class="lp-kv__value">{{ \App\Support\Format::money($employee->monthly_salary) }}</span></div>
+                <div class="lp-kv"><span class="lp-kv__label">Coins per approved lead</span><span class="lp-kv__value">{{ number_format((float) $employee->coins_per_lead, 2) }}</span></div>
                 <div class="lp-kv"><span class="lp-kv__label">Bank</span><span class="lp-kv__value">{{ $employee->bank_name ?? '—' }}</span></div>
                 <div class="lp-kv"><span class="lp-kv__label">Emergency contact</span><span class="lp-kv__value">{{ $employee->emergency_contact_name ?? '—' }} {{ $employee->emergency_contact_number ? '· '.$employee->emergency_contact_number : '' }}</span></div>
             </x-card>

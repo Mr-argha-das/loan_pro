@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Application\ChangeApplicationStatusRequest;
 use App\Http\Controllers\Concerns\HandlesApplicationWorkflow;
 use App\Models\ApplicationStatus;
+use App\Models\Customer;
 use App\Models\DocumentType;
 use App\Models\InsuranceApplication;
 use App\Models\Lead;
@@ -111,11 +112,21 @@ class LoanApplicationController extends Controller
             return redirect()->route('applications.show', $this->leads->convertToApplication($lead, $request->user()));
         }
 
+        $customer = $request->filled('customer_id')
+            ? Customer::query()->find($request->integer('customer_id'))
+            : null;
+
         return view('applications.loans.create', [
             'lead' => $lead?->load(['customer', 'category', 'subcategory', 'lenders.lender']),
-            'leads' => Lead::query()->ownedBy($request->user())->with('customer')
-                ->whereIn('status', ['verified', 'lender-selected'])
-                ->latest()->limit(200)->get(),
+            'customer' => $customer,
+            'customers' => Customer::query()->orderBy('name')->limit(2000)->get(['id', 'name', 'mobile']),
+            // Leads are listed only for the chosen customer, so the application follows that customer.
+            'leads' => $customer
+                ? Lead::query()->ownedBy($request->user())->with('customer')
+                    ->where('customer_id', $customer->id)
+                    ->whereIn('status', ['verified', 'lender-selected'])
+                    ->latest()->limit(200)->get()
+                : collect(),
             'product' => Product::query()->where('slug', Product::LOANS)->first(),
         ]);
     }

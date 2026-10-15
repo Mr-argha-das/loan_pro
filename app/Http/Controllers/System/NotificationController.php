@@ -9,6 +9,7 @@ use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 
 class NotificationController extends Controller
@@ -81,6 +82,49 @@ class NotificationController extends Controller
         }
 
         return redirect($notification->url ?: route('notifications.index'));
+    }
+
+    /**
+     * GET entry point for notification links: marks the notification as read
+     * and sends the user to its target page. Used by the bell dropdown links.
+     */
+    public function open(Request $request, AppNotification $notification): RedirectResponse
+    {
+        $this->guard($request, $notification);
+
+        $notification->markAsRead();
+
+        return redirect($this->safeTarget($notification->url) ?? route('notifications.index'));
+    }
+
+    /**
+     * Only redirect to in-app pages that accept GET. Older notifications may hold
+     * URLs captured from POST-only endpoints, which would show a 405 page.
+     */
+    protected function safeTarget(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+        $host = $parts['host'] ?? null;
+        if ($host !== null && $host !== parse_url(config('app.url'), PHP_URL_HOST)) {
+            return null;
+        }
+
+        $path = $parts['path'] ?? '/';
+        $target = $path.(isset($parts['query']) ? '?'.$parts['query'] : '');
+
+        try {
+            $match = Route::getRoutes()->match(Request::create($target, 'GET'));
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return in_array('GET', $match->methods(), true) || in_array('HEAD', $match->methods(), true)
+            ? $target
+            : null;
     }
 
     public function markAllRead(Request $request): JsonResponse|RedirectResponse

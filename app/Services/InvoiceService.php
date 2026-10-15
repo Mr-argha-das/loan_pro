@@ -31,6 +31,11 @@ class InvoiceService
                 'tax_rate' => $data['tax_rate'] ?? 18,
                 'status' => $data['status'] ?? 'draft',
                 'place_of_supply' => $data['place_of_supply'] ?? null,
+                'gst_treatment' => $data['gst_treatment'] ?? null,
+                'gstin' => $data['gstin'] ?? null,
+                'gst_legal_name' => $data['gst_legal_name'] ?? null,
+                'gst_trade_name' => $data['gst_trade_name'] ?? null,
+                'pan_number' => $data['pan_number'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'terms' => $data['terms'] ?? null,
                 'created_by' => $actor->id,
@@ -60,6 +65,11 @@ class InvoiceService
                 'tax_rate' => $data['tax_rate'] ?? $invoice->tax_rate,
                 'status' => $data['status'] ?? $invoice->status,
                 'place_of_supply' => $data['place_of_supply'] ?? $invoice->place_of_supply,
+                'gst_treatment' => $data['gst_treatment'] ?? $invoice->gst_treatment,
+                'gstin' => $data['gstin'] ?? $invoice->gstin,
+                'gst_legal_name' => $data['gst_legal_name'] ?? $invoice->gst_legal_name,
+                'gst_trade_name' => $data['gst_trade_name'] ?? $invoice->gst_trade_name,
+                'pan_number' => $data['pan_number'] ?? $invoice->pan_number,
                 'notes' => $data['notes'] ?? $invoice->notes,
                 'terms' => $data['terms'] ?? $invoice->terms,
             ])->save();
@@ -143,6 +153,9 @@ class InvoiceService
 
     public function customerOptions()
     {
-        return Customer::query()->orderBy('name')->limit(500)->get(['id', 'name', 'mobile']);
+        return Customer::query()->orderBy('name')->limit(500)->get([
+            'id', 'name', 'mobile', 'address', 'city', 'state', 'pincode', 'pan_number',
+            'gst_treatment', 'gstin', 'gst_legal_name', 'gst_trade_name', 'place_of_supply',
+        ]);
     }
 }

@@ -11,6 +11,7 @@
 
 @section('page-actions')
     <div class="d-flex flex-wrap gap-2">
+        @unless (auth()->user()->isAdmin())
         @if (! $today)
             <form method="POST" action="{{ route('attendance.check-in') }}">
                 @csrf
@@ -26,6 +27,7 @@
                 <i class="bi bi-check2-circle"></i> Day complete · {{ $today->workedHours() ?? '—' }}
             </span>
         @endif
+        @endunless
         <a href="{{ route('attendance.export', request()->query()) }}" class="btn btn-light btn-sm"><i class="bi bi-file-earmark-excel"></i> Export</a>
     </div>
 @endsection

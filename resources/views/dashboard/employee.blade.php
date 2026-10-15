@@ -116,7 +116,7 @@
                             @empty
                                 @foreach ($myPayments as $payment)
                                     <tr>
-                                        <td><a href="{{ route('payments.show', $payment) }}" class="fw-semibold">{{ $payment->payment_code }}</a>
+                                        <td><span class="fw-semibold">{{ $payment->payment_code }}</span>
                                             <div class="text-muted" style="font-size:.73rem">Payment · {{ \App\Support\Format::titleCase($payment->mode) }}</div>
                                         </td>
                                         <td class="fw-semibold">{{ \App\Support\Format::money($payment->amount) }}</td>
