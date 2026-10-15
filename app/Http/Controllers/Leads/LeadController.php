@@ -152,8 +152,8 @@ class LeadController extends Controller
 
         $lead = match ($step) {
             1 => $this->updateCustomerStep($lead, $request),
-            5 => $this->handleDocuments($request, $lead),
-            7, 8 => $this->handleLenderSelection($request, $lead),
+            7 => $this->handleDocuments($request, $lead),
+            6, 8 => $this->handleLenderSelection($request, $lead),
             default => $this->leads->updateStep($lead, $step, $request->validated()),
         };
 
@@ -164,7 +164,7 @@ class LeadController extends Controller
             $lead = $this->leads->updateStep($lead, $step, ['current_step' => $nextStep]);
         }
 
-        if ($step === 6 && ! $asDraft && $lead->status === 'draft') {
+        if ($step === 5 && ! $asDraft && $lead->status === 'draft') {
             $this->leads->changeStatus($lead, 'new', 'Basic details and loan requirement captured.', $request->user());
         }
 

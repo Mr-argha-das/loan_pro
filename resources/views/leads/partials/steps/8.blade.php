@@ -3,7 +3,7 @@
     @if ($selectedLenders->isEmpty())
         <x-empty-state icon="bi-bank" title="No lenders selected yet" message="Go back to the lender selection step to shortlist products.">
             <x-slot:action>
-                <a href="{{ route('leads.wizard', ['lead' => $lead, 'step' => 7]) }}" class="btn btn-primary btn-sm">
+                <a href="{{ route('leads.wizard', ['lead' => $lead, 'step' => 6]) }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-arrow-left"></i> Select lenders
                 </a>
             </x-slot:action>

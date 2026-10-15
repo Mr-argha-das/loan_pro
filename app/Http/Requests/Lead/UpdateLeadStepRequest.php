@@ -64,7 +64,7 @@ class UpdateLeadStepRequest extends FormRequest
                 'office_address' => ['nullable', 'string', 'max:255'],
                 'existing_emi' => ['nullable', 'numeric', 'min:0'],
             ],
-            5 => [
+            7 => [
                 // Documents are optional at this step ("upload what you already have");
                 // rows without a file are ignored by the controller.
                 'documents' => ['nullable', 'array'],
@@ -73,13 +73,13 @@ class UpdateLeadStepRequest extends FormRequest
                 'documents.*.issued_number' => ['nullable', 'string', 'max:60'],
                 'documents.*.expires_at' => ['nullable', 'date'],
             ],
-            6 => [
+            5 => [
                 'loan_amount' => ['required', 'numeric', 'min:1000', 'max:200000000'],
                 'tenure_months' => ['required', 'integer', 'between:3,480'],
                 'product_category_id' => [$required, 'exists:product_categories,id'],
                 'product_subcategory_id' => ['nullable', 'exists:product_subcategories,id'],
             ],
-            7, 8 => [
+            6, 8 => [
                 'lenders' => ['nullable', 'array'],
                 'lenders.*.lender_id' => ['required_with:lenders', 'exists:lenders,id'],
                 'lenders.*.lender_product_id' => ['nullable', 'exists:lender_products,id'],

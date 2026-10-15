@@ -27,9 +27,9 @@ class Lead extends Model
         2 => 'Basic Information',
         3 => 'Personal Information',
         4 => 'Professional Information',
-        5 => 'KYC & Documents',
-        6 => 'Loan & Insurance',
-        7 => 'Lender Selection',
+        5 => 'Loan & Insurance',
+        6 => 'Lender Selection',
+        7 => 'KYC & Documents',
         8 => 'Selected Lenders',
         9 => 'Lead Summary',
     ];

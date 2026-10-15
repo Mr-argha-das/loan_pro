@@ -240,10 +240,10 @@
                                 @empty
                                     <tr>
                                         <td colspan="9">
-                                            <x-empty-state icon="bi-bank" title="No lenders shortlisted" message="Use step 8 of the wizard to compare and select lenders.">
+                                            <x-empty-state icon="bi-bank" title="No lenders shortlisted" message="Use step 6 of the wizard to compare and select lenders.">
                                                 <x-slot:action>
                                                     @can('update', $lead)
-                                                        <a href="{{ route('leads.wizard', ['lead' => $lead, 'step' => 8]) }}" class="btn btn-primary btn-sm">Select lenders</a>
+                                                        <a href="{{ route('leads.wizard', ['lead' => $lead, 'step' => 6]) }}" class="btn btn-primary btn-sm">Select lenders</a>
                                                     @endcan
                                                 </x-slot:action>
                                             </x-empty-state>
