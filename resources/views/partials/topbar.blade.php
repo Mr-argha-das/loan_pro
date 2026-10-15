@@ -26,7 +26,7 @@
 
     <div class="ms-auto d-flex align-items-center gap-2">
         @if ($user->employee && $user->hasPermissionTo('attendance.mark'))
-            <form method="POST" action="{{ route($todayAttendance?->check_in_at ? 'attendance.check-out' : 'attendance.check-in') }}" class="d-none d-md-block">
+            <form method="POST" action="{{ route($todayAttendance?->check_in_at ? 'attendance.check-out' : 'attendance.check-in') }}" class="d-none d-md-block" data-geo-form>
                 @csrf
                 <button class="btn btn-sm {{ $todayAttendance?->check_in_at ? 'btn-outline-secondary' : 'btn-success' }}">
                     <i class="bi {{ $todayAttendance?->check_in_at ? 'bi-box-arrow-right' : 'bi-box-arrow-in-right' }}"></i>
@@ -45,6 +45,44 @@
                 </div>
             </div>
         @endif
+
+        <script>
+            // Attendance forms: capture the browser GPS fix before submitting. If permission is denied
+            // or no fix arrives in time, the form is still submitted without location.
+            (() => {
+                document.addEventListener('submit', (event) => {
+                    const form = event.target;
+                    if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-geo-form') || form.dataset.geoReady) return;
+                    event.preventDefault();
+
+                    let finished = false;
+                    const finish = () => {
+                        if (finished) return;
+                        finished = true;
+                        form.dataset.geoReady = '1';
+                        form.submit();
+                    };
+                    const setField = (name, value) => {
+                        let input = form.querySelector(`input[name="${name}"]`);
+                        if (!input) {
+                            input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = name;
+                            form.appendChild(input);
+                        }
+                        input.value = value;
+                    };
+
+                    if (!navigator.geolocation) return finish();
+                    setTimeout(finish, 8000);
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                        setField('latitude', pos.coords.latitude);
+                        setField('longitude', pos.coords.longitude);
+                        finish();
+                    }, finish, { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 });
+                });
+            })();
+        </script>
 
         <div class="d-none d-md-flex flex-column align-items-end lh-sm px-2" data-live-clock aria-live="off">
             <span class="fw-semibold small" data-clock-date>{{ now(config('app.timezone'))->format('D, d M Y') }}</span>
