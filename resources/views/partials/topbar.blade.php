@@ -35,6 +35,17 @@
             </form>
         @endif
 
+        @if ($user->employee)
+            @php $coins = app(\App\Services\EmployeePayoutService::class)->figures($user->employee, now(config('app.timezone'))->format('Y-m')); @endphp
+            <div class="d-flex align-items-center gap-2 px-2 py-1 rounded-3 bg-warning-subtle" title="This month: {{ $coins['approved_leads'] }} approved lead(s) x {{ number_format($coins['coins_per_lead'], 2) }} coins per lead">
+                <i class="bi bi-coin text-warning fs-5"></i>
+                <div class="lh-sm">
+                    <div class="fw-bold small">{{ number_format($coins['total_coins'], 0) }} coins</div>
+                    <div class="text-muted" style="font-size:.7rem">{{ $coins['approved_leads'] }} approved this month</div>
+                </div>
+            </div>
+        @endif
+
         <div class="d-none d-md-flex flex-column align-items-end lh-sm px-2" data-live-clock aria-live="off">
             <span class="fw-semibold small" data-clock-date>{{ now(config('app.timezone'))->format('D, d M Y') }}</span>
             <span class="text-muted" style="font-size:.75rem" data-clock-time>{{ now(config('app.timezone'))->format('h:i:s A') }}</span>
