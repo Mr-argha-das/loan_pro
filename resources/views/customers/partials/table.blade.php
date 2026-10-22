@@ -9,7 +9,7 @@
                 <th scope="col">City</th>
                 <th scope="col">Employment</th>
                 <x-sortable-th column="monthly_income" label="Monthly income" />
-                <th scope="col">Relationship</th>
+                <th scope="col">Assign</th>
                 <th scope="col">Lead status</th>
                 <th scope="col">Closed</th>
                 <x-sortable-th column="created_at" label="Added" />

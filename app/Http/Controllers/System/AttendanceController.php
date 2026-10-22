@@ -81,6 +81,20 @@ class AttendanceController extends Controller
         ];
     }
 
+    /** Optional browser GPS fix sent with check-in/out. Invalid or missing values are stored as null. */
+    protected function location(Request $request): array
+    {
+        $lat = $request->input('latitude');
+        $lng = $request->input('longitude');
+        $valid = is_numeric($lat) && is_numeric($lng)
+            && abs((float) $lat) <= 90 && abs((float) $lng) <= 180;
+
+        return [
+            'lat' => $valid ? round((float) $lat, 7) : null,
+            'lng' => $valid ? round((float) $lng, 7) : null,
+        ];
+    }
+
     public function checkIn(Request $request): RedirectResponse|JsonResponse
     {
         $user = $request->user();
@@ -105,10 +119,14 @@ class AttendanceController extends Controller
         $expected = \Illuminate\Support\Carbon::parse(today()->toDateString().' '.$officeStart);
         $lateMinutes = max(0, (int) $expected->diffInMinutes(now(), false));
 
+        $location = $this->location($request);
+
         $attendance = Attendance::query()->updateOrCreate(
             ['employee_id' => $employee->id, 'attendance_date' => today()->toDateString()],
             [
                 'check_in_at' => now(),
+                'check_in_lat' => $location['lat'],
+                'check_in_lng' => $location['lng'],
                 'status' => $lateMinutes > $grace ? 'late' : 'present',
                 'late_minutes' => $lateMinutes > $grace ? $lateMinutes : 0,
                 'work_mode' => $request->input('work_mode', 'office'),
@@ -146,11 +164,14 @@ class AttendanceController extends Controller
                 : back()->with('error', 'You have already checked out today.');
         }
 
+        $location = $this->location($request);
         $worked = (int) $attendance->check_in_at->diffInMinutes(now());
         $halfDayMinutes = (int) config('loanpro.attendance.half_day_minutes', 300);
 
         $attendance->forceFill([
             'check_out_at' => now(),
+            'check_out_lat' => $location['lat'],
+            'check_out_lng' => $location['lng'],
             'worked_minutes' => $worked,
             'status' => $worked < $halfDayMinutes ? 'half_day' : $attendance->status,
         ])->save();
