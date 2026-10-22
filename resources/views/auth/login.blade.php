@@ -8,7 +8,7 @@
             <div class="d-flex align-items-center gap-3 mb-4">
                 <span class="lp-sidebar__mark" style="width:46px;height:46px;font-size:1.1rem">LP</span>
                 <div>
-                    <div class="fw-bold fs-5">LoanPro</div>
+                    <div class="fw-bold fs-5">{{ \App\Models\Setting::get('company_name', config('app.name')) }}</div>
                     <div class="text-uppercase" style="font-size:.7rem;letter-spacing:.12em;opacity:.7">Finance &amp; Insurance</div>
                 </div>
             </div>
@@ -34,7 +34,7 @@
             <div class="lp-card p-4 p-lg-5 h-100">
                 <div class="d-lg-none d-flex align-items-center gap-2 mb-4">
                     <span class="lp-sidebar__mark">LP</span>
-                    <div class="fw-bold">LoanPro</div>
+                    <div class="fw-bold">{{ \App\Models\Setting::get('company_name', config('app.name')) }}</div>
                 </div>
 
                 <h1 class="h4 mb-1">Welcome back</h1>

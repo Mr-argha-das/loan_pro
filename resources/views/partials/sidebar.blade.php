@@ -8,7 +8,7 @@
     <a href="{{ route('dashboard') }}" class="lp-sidebar__brand text-decoration-none">
         <span class="lp-sidebar__mark">LP</span>
         <span>
-            <span class="lp-sidebar__title d-block">LoanPro</span>
+            <span class="lp-sidebar__title d-block">{{ $companyName ?? config('app.name') }}</span>
             <span class="lp-sidebar__subtitle">Finance &amp; Insurance</span>
         </span>
     </a>

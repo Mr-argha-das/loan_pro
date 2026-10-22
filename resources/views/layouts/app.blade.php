@@ -49,7 +49,7 @@
             <footer class="px-4 py-3 text-muted small border-top bg-white">
                 <div class="d-flex flex-wrap justify-content-between gap-2">
                     <span>&copy; {{ now()->year }} {{ $companyName ?? config('app.name') }}. All rights reserved.</span>
-                    <span>LoanPro CRM v1.0</span>
+                    <span>{{ $companyName ?? config('app.name') }} CRM v1.0</span>
                 </div>
             </footer>
         </div>
