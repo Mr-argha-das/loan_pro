@@ -46,7 +46,7 @@ class InvoiceController extends Controller
         return view('finance.invoices.index', [
             'invoices' => $invoices,
             'stats' => $this->invoices->stats($request->user()),
-            'customers' => $this->invoices->customerOptions(),
+            'customers' => $this->invoices->customerOptions()->pluck('name', 'id'),
             'filters' => $request->all(),
         ]);
     }
