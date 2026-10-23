@@ -13,15 +13,16 @@
 @endsection
 
 @section('content')
+
     <form method="POST" action="{{ $isEdit ? route('invoices.update', $invoice) : route('invoices.store') }}" id="invoice-form" novalidate>
         @csrf
         @if ($isEdit) @method('PUT') @endif
 
         <div class="row g-4">
-            <div class="col-lg-8">
+            <div class="col-lg-12">
                 <x-section title="Invoice details" icon="bi-receipt">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-2">
                             <label class="form-label" for="customer_id">Customer<span class="req">*</span></label>
                             <select class="form-select" id="customer_id" name="customer_id" required>
                                 <option value="">Select customer</option>
@@ -37,11 +38,11 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6"><x-input name="title" label="Invoice title" :value="$invoice->title" required placeholder="e.g. Loan processing fee" /></div>
+                        <div class="col-md-2"><x-input name="title" label="Invoice title" :value="$invoice->title" required placeholder="e.g. Loan processing fee" /></div>
 
-                        <div class="col-md-3"><x-input name="invoice_date" label="Invoice date" type="date" :value="$invoice->invoice_date?->toDateString() ?? now()->toDateString()" required /></div>
-                        <div class="col-md-3"><x-input name="due_date" label="Due date" type="date" :value="$invoice->due_date?->toDateString()" required /></div>
-                        <div class="col-md-3">
+                        <div class="col-md-2"><x-input name="invoice_date" label="Invoice date" type="date" :value="$invoice->invoice_date?->toDateString() ?? now()->toDateString()" required /></div>
+                        <div class="col-md-2"><x-input name="due_date" label="Due date" type="date" :value="$invoice->due_date?->toDateString()" required /></div>
+                        <div class="col-md-2">
                             <label class="form-label" for="lead_id">Linked lead</label>
                             <select class="form-select" id="lead_id" name="lead_id">
                                 <option value="">None</option>
@@ -50,7 +51,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label" for="loan_application_id">Linked application</label>
                             <select class="form-select" id="loan_application_id" name="loan_application_id">
                                 <option value="">None</option>
@@ -65,11 +66,11 @@
                 <x-section title="Customer & GST details" icon="bi-person-vcard"
                            description="Selecting a customer fills these in automatically. Edit them only if the invoice needs different details.">
                     <div class="row g-3">
-                        <div class="col-md-6"><label class="form-label" for="bill_name">Customer name</label><input type="text" class="form-control" id="bill_name" readonly data-bill="name"></div>
-                        <div class="col-md-6"><label class="form-label" for="bill_mobile">Mobile</label><input type="text" class="form-control" id="bill_mobile" readonly data-bill="mobile"></div>
-                        <div class="col-12"><label class="form-label" for="bill_address">Address</label><input type="text" class="form-control" id="bill_address" readonly data-bill="address"></div>
+                        <div class="col-md-3"><label class="form-label" for="bill_name">Customer name</label><input type="text" class="form-control" id="bill_name" readonly data-bill="name"></div>
+                        <div class="col-md-3"><label class="form-label" for="bill_mobile">Mobile</label><input type="text" class="form-control" id="bill_mobile" readonly data-bill="mobile"></div>
+                        <div class="col-md-6"><label class="form-label" for="bill_address">Address</label><input type="text" class="form-control" id="bill_address" readonly data-bill="address"></div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <label class="form-label" for="gst_treatment">GST treatment</label>
                             <select class="form-select" id="gst_treatment" name="gst_treatment" data-gst="gst_treatment">
                                 <option value="">Select treatment</option>
@@ -78,11 +79,11 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4"><x-input name="gstin" label="GSTIN / UIN" :value="$invoice->gstin" maxlength="15" data-gst="gstin" /></div>
-                        <div class="col-md-4"><x-input name="pan_number" label="PAN" :value="$invoice->pan_number" maxlength="10" data-gst="pan" /></div>
-                        <div class="col-md-6"><x-input name="gst_legal_name" label="Business legal name" :value="$invoice->gst_legal_name" data-gst="legal" /></div>
-                        <div class="col-md-6"><x-input name="gst_trade_name" label="Business trade name" :value="$invoice->gst_trade_name" data-gst="trade" /></div>
-                        <div class="col-md-6"><x-input name="place_of_supply" label="Place of supply" :value="$invoice->place_of_supply" data-gst="place" /></div>
+                        <div class="col-md-2"><x-input name="gstin" label="GSTIN / UIN" :value="$invoice->gstin" maxlength="15" data-gst="gstin" /></div>
+                        <div class="col-md-2"><x-input name="pan_number" label="PAN" :value="$invoice->pan_number" maxlength="10" data-gst="pan" /></div>
+                        <div class="col-md-2"><x-input name="gst_legal_name" label="Business legal name" :value="$invoice->gst_legal_name" data-gst="legal" /></div>
+                        <div class="col-md-2"><x-input name="gst_trade_name" label="Business trade name" :value="$invoice->gst_trade_name" data-gst="trade" /></div>
+                        <div class="col-md-2"><x-input name="place_of_supply" label="Place of supply" :value="$invoice->place_of_supply" data-gst="place" /></div>
                     </div>
                 </x-section>
 
@@ -131,16 +132,17 @@
 
                     <button type="button" class="btn btn-light btn-sm mt-3" id="add-invoice-line"><i class="bi bi-plus-lg"></i> Add line item</button>
                 </x-section>
-
+                 </div>
+<div class="col-lg-6">
                 <x-section title="Notes &amp; terms" icon="bi-journal-text">
                     <div class="row g-3">
-                        <div class="col-md-6"><x-textarea name="notes" label="Notes to customer" rows="3" :value="$invoice->notes" /></div>
-                        <div class="col-md-6"><x-textarea name="terms" label="Terms &amp; conditions" rows="3" :value="$invoice->terms" /></div>
+                        <div class="col-md-12"><x-textarea name="notes" label="Notes to customer" rows="3" :value="$invoice->notes" /></div>
+                        <div class="col-md-12"><x-textarea name="terms" label="Terms &amp; conditions" rows="3" :value="$invoice->terms" /></div>
                     </div>
                 </x-section>
-            </div>
-
-            <div class="col-lg-4">
+           
+</div>
+            <div class="col-lg-6">
                 <x-section title="Summary" icon="bi-calculator">
                     <div class="row g-3">
                         <div class="col-6"><x-input name="discount" label="Discount" type="number" step="0.01" :value="$invoice->discount ?? 0" icon="bi-currency-rupee" /></div>
