@@ -173,6 +173,11 @@ class InvoiceController extends Controller
                 'email' => Setting::get('company_email'),
                 'phone' => Setting::get('company_phone'),
                 'gst' => Setting::get('gst_number'),
+                'pan' => Setting::get('company_pan'),
+                'sac' => Setting::get('company_sac_code'),
+                'bank_name' => Setting::get('bank_name'),
+                'bank_account' => Setting::get('bank_account_number'),
+                'bank_ifsc' => Setting::get('bank_ifsc'),
             ],
         ])->setPaper('a4');
 
