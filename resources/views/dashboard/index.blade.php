@@ -13,39 +13,121 @@
 @endsection
 
 @section('content')
-    <div class="row g-3 mb-4">
+<style>
+    .lp-stat {
+    min-width: 0;
+     background: linear-gradient(135deg, #1689ed, #0871e8)!important;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius);
+    padding: 18px;
+    height: 100%;
+    box-shadow: var(--lp-shadow-xs);
+    transition: box-shadow var(--lp-transition), transform var(--lp-transition);
+}
+
+/* Gradients */
+.card-blue {
+    background: linear-gradient(135deg, #1689ed, #0871e8)!important;
+}
+
+.card-green {
+    background: linear-gradient(135deg, #35ca72, #0cae5c)!important;
+}
+
+.card-purple {
+    background: linear-gradient(135deg, #9550ed, #7b35df)!important;
+}
+
+.card-orange {
+    background: linear-gradient(135deg, #ffc536, #ff9e19)!important;
+}
+
+.card-red {
+    background: linear-gradient(135deg, #fa3d4e, #ed1c35)!important;
+}
+
+.card-cyan {
+    background: linear-gradient(135deg, #16c7c6, #08a9bd)!important;
+}
+
+.card-blue-dark {
+    background: linear-gradient(135deg, #4778e8, #2459ca)!important;
+}
+
+.card-pink {
+    background: linear-gradient(135deg, #ed4c9c, #dd2180)!important;
+}
+
+.lp-stat__label{
+    color: #fff!important;
+}
+
+.lp-stat__value{
+   color: #fff!important; 
+}
+
+.lp-stat__meta{
+     color: #fff!important; 
+}
+
+.lp-stat__meta span.fw-semibold.text-success{
+    color: #fff!important; 
+}
+
+/* Left Icon */
+.lp-stat__icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 11px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 23px;
+    font-weight: 400;
+
+    background: rgba(255, 255, 255, 0.18)!important;
+    border: 1px solid rgba(255, 255, 255, 0.08)!important;
+    color: #fff!important;
+    box-shadow: inset 0 1px 5px rgba(255, 255, 255, 0.12)!important;
+}
+    
+</style>
+  <div class="row g-3 mb-4">
         <div class="col-6 col-xl-3">
             <x-stat-card label="Total Leads" :value="number_format($kpis['total_leads'])" icon="bi-funnel" tone="primary"
-                         :trend="$kpis['total_leads_trend']" meta="vs last year" :href="route('leads.index')" />
+                         :trend="$kpis['total_leads_trend']" meta="vs last year" :href="route('leads.index')" class="card-blue" />
         </div>
         <div class="col-6 col-xl-3">
             <x-stat-card label="New Leads" :value="number_format($kpis['new_leads'])" icon="bi-person-plus" tone="info"
-                         meta="this year" :href="route('leads.index', ['from_date' => now()->startOfYear()->toDateString()])" />
+                         meta="this year" :href="route('leads.index', ['from_date' => now()->startOfYear()->toDateString()])"  class="card-green" />
         </div>
         <div class="col-6 col-xl-3">
             <x-stat-card label="Active Applications" :value="number_format($kpis['active_applications'])" icon="bi-clipboard-check" tone="warning"
-                         meta="in progress" :href="route('applications.index')" />
+                         meta="in progress" :href="route('applications.index')"  class="card-purple" />
         </div>
         <div class="col-6 col-xl-3">
             <x-stat-card label="Approved" :value="number_format($kpis['approved_applications'])" icon="bi-patch-check" tone="success"
-                         meta="ready to disburse" :href="route('applications.index', ['status' => 'approved'])" />
+                         meta="ready to disburse" :href="route('applications.index', ['status' => 'approved'])"  class="card-orange" />
         </div>
 
         <div class="col-6 col-xl-3">
             <x-stat-card label="Pending Applications" :value="number_format($kpis['pending_applications'])" icon="bi-hourglass-split" tone="secondary"
-                         meta="awaiting action" />
+                         meta="awaiting action"  class="card-red" />
         </div>
         <div class="col-6 col-xl-3">
             <x-stat-card label="Disbursed Loans" :value="number_format($kpis['disbursed_loans'])" icon="bi-cash-stack" tone="success"
-                         meta="lifetime" :href="route('disbursements.index')" />
+                         meta="lifetime" :href="route('disbursements.index')"  class="card-cyan" />
         </div>
         <div class="col-6 col-xl-3">
             <x-stat-card label="Total Disbursement" :value="\App\Support\Format::compactInr($kpis['total_disbursement'])" icon="bi-graph-up-arrow" tone="primary"
-                         meta="completed disbursals" />
+                         meta="completed disbursals"  class="card-blue-dark" />
         </div>
         <div class="col-6 col-xl-3">
             <x-stat-card label="Pending Payments" :value="\App\Support\Format::compactInr($kpis['pending_payments'])" icon="bi-exclamation-circle" tone="danger"
-                         meta="outstanding invoices" :href="route('invoices.index', ['status' => 'overdue'])" />
+                         meta="outstanding invoices" :href="route('invoices.index', ['status' => 'overdue'])"  class="card-pink" />
         </div>
     </div>
 
@@ -194,7 +276,7 @@
                 datasets: [{
                     label: 'Leads',
                     data: data.funnel.map((row) => row.value),
-                    backgroundColor: '#1677FF',
+                    backgroundColor: '#eba243',
                     borderRadius: 8,
                     barThickness: 26,
                 }],
@@ -219,7 +301,7 @@
                     {
                         label: 'Applications',
                         data: data.monthly.counts,
-                        borderColor: '#1677FF',
+                        borderColor: '#ed1c35',
                         backgroundColor: 'rgba(22,119,255,.12)',
                         fill: true,
                         tension: 0.35,
