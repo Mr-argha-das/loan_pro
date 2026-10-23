@@ -1,104 +1,290 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>{{ $invoice->invoice_number }}</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #172B4D; margin: 0; padding: 28px 32px; }
-        .head { display: flex; justify-content: space-between; border-bottom: 2px solid #1677FF; padding-bottom: 12px; margin-bottom: 18px; }
-        .brand { font-size: 17px; font-weight: bold; color: #0B1F3A; }
-        .muted { color: #7A8CA5; }
-        h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: 1px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th { background: #F5F8FC; text-align: left; padding: 7px 8px; border-bottom: 1px solid #E5EBF3; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
-        td { padding: 7px 8px; border-bottom: 1px solid #EEF2F7; }
-        .right { text-align: right; }
-        .totals { width: 46%; margin-left: auto; margin-top: 14px; }
-        .totals td { border: none; padding: 4px 0; }
-        .totals .grand td { border-top: 1px solid #E5EBF3; padding-top: 8px; font-size: 13px; font-weight: bold; color: #1677FF; }
-        .meta { display: flex; gap: 28px; margin-bottom: 12px; }
-        .meta div { flex: 1; }
-        .label { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: #7A8CA5; margin-bottom: 3px; }
-        .terms { margin-top: 20px; font-size: 9.5px; color: #7A8CA5; white-space: pre-line; border-top: 1px solid #E5EBF3; padding-top: 10px; }
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 10px; background: #E8F1FF; color: #1677FF; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tax Invoice</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        color: #000;
+    }
+
+    .invoice {
+        width: 100%;
+        max-width: 1100px;
+        margin: 20px auto;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .invoice th,
+    .invoice td {
+        border: 1px solid #000;
+        padding: 6px;
+        vertical-align: middle;
+        overflow-wrap: break-word;
+    }
+
+    .invoice th {
+        text-align: center;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    .right {
+        text-align: right;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+
+    .company-title {
+        font-size: 17px;
+        font-weight: bold;
+    }
+
+    .invoice-title {
+        font-size: 15px;
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+    .no-border {
+        border: none !important;
+    }
+
+    .amount-words {
+        font-weight: bold;
+    }
+
+    .signature {
+        height: 115px;
+        vertical-align: bottom !important;
+    }
+
+    @media print {
+        body {
+            margin: 0;
+        }
+
+        .invoice {
+            width: 100%;
+            margin: 0;
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+    }
+</style>
 </head>
+
 <body>
-    <div class="head">
-        <div>
-            <div class="brand">{{ $company['name'] }}</div>
-            <div class="muted">{{ $company['address'] }}</div>
-            <div class="muted">
-                {{ $company['email'] }}@if ($company['phone']) · {{ $company['phone'] }}@endif
-                @if ($company['gst'])<br>GSTIN: {{ $company['gst'] }}@endif
+
+<table class="invoice">
+
+    <!-- Company Header -->
+    <tr>
+        <th colspan="8" class="center">
+            <div class="company-title">
+                SHEKHAR SAIN &amp; SON'S PVT LTD.
             </div>
-        </div>
-        <div class="right">
-            <h1>INVOICE</h1>
-            <div><strong>{{ $invoice->invoice_number }}</strong></div>
-            <div class="muted">Date: {{ \App\Support\Format::date($invoice->invoice_date) }}</div>
-            <div class="muted">Due: {{ \App\Support\Format::date($invoice->due_date) }}</div>
-            <div style="margin-top:6px"><span class="badge">{{ \App\Support\Format::titleCase($invoice->status) }}</span></div>
-        </div>
-    </div>
+            ADDRESS – SHOP NO. 9 RAO MALKHAN SINGH MARKET
+            SOHANA ROAD DHARUHERA REWARI (123106)
+            <br>
+            <span class="invoice-title">TAX INVOICE</span>
+            <br>
+            <b>Original copy for recipient</b>
+        </th>
+    </tr>
 
-    <div class="meta">
-        <div>
-            <div class="label">Billed to</div>
-            <div><strong>{{ $invoice->customer?->name }}</strong></div>
-            <div class="muted">
-                {{ $invoice->customer?->address }}<br>
-                {{ collect([$invoice->customer?->city, $invoice->customer?->pincode])->filter()->implode(' - ') }}<br>
-                {{ $invoice->customer?->mobile }} · {{ $invoice->customer?->email }}
-            </div>
-        </div>
-        <div>
-            <div class="label">References</div>
-            <div class="muted">
-                @if ($invoice->lead)Lead: {{ $invoice->lead->lead_code }}<br>@endif
-                @if ($invoice->application)Application: {{ $invoice->application->application_code }}<br>@endif
-                @if ($invoice->place_of_supply)Place of supply: {{ $invoice->place_of_supply }}@endif
-            </div>
-        </div>
-    </div>
+    <!-- Customer and Invoice Details -->
+    <tr>
+        <td colspan="5" rowspan="2">
+            <b>To,</b><br><br>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Description</th>
-                <th class="right">Qty</th>
-                <th class="right">Rate</th>
-                <th class="right">Tax</th>
-                <th class="right">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($invoice->items as $item)
-                <tr>
-                    <td>{{ $item->description }}</td>
-                    <td class="right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
-                    <td class="right">{{ \App\Support\Format::money($item->unit_price) }}</td>
-                    <td class="right">{{ $item->tax_rate }}%</td>
-                    <td class="right">{{ \App\Support\Format::money($item->line_total) }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+            <b>ANDROMEDA SALES &amp; DISTRIBUTION PVT LTD</b>
+            <br><br>
 
-    <table class="totals">
-        <tr><td>Subtotal</td><td class="right">{{ \App\Support\Format::money($invoice->subtotal) }}</td></tr>
-        <tr><td>Tax</td><td class="right">{{ \App\Support\Format::money($invoice->tax_amount) }}</td></tr>
-        <tr><td>Discount</td><td class="right">-{{ \App\Support\Format::money($invoice->discount) }}</td></tr>
-        <tr><td>Paid</td><td class="right">{{ \App\Support\Format::money($invoice->paid_amount) }}</td></tr>
-        <tr class="grand"><td>Total</td><td class="right">{{ \App\Support\Format::money($invoice->total) }}</td></tr>
-        <tr><td>Balance due</td><td class="right"><strong>{{ \App\Support\Format::money($invoice->balance_amount) }}</strong></td></tr>
-    </table>
+            ADD. 1<sup>st</sup> FLOOR SHOP NO – 125, GRAIN MARKET
+            <br>
+            JAGDHRI, YAMUNA NAGAR, HARYANA 135001
+            <br>
+            GSTIN: 06AALCS9004J1Z4
+            <br>
+            PAN NO.: AALCS9004J
+        </td>
 
-    @if ($invoice->terms)
-        <div class="terms"><strong>Terms &amp; conditions</strong><br>{{ $invoice->terms }}</div>
-    @endif
+        <td colspan="3">
+            <b>Invoice NO:</b> 2026-27/16
+        </td>
+    </tr>
 
-    <div class="terms">This is a computer generated invoice issued by {{ $company['name'] }}.</div>
+    <tr>
+        <td colspan="3">
+            <b>DATE:</b> 29/08/2026
+            <br><br>
+            <b>Product:</b>
+        </td>
+    </tr>
+
+    <!-- Activities Heading -->
+    <tr>
+        <th colspan="5">Activities</th>
+        <th>Rate</th>
+        <th colspan="2">AMOUNT</th>
+    </tr>
+
+    <tr>
+        <td colspan="8">
+            <b>Commission for loan disbursal of the below-mentioned cases.</b>
+        </td>
+    </tr>
+
+    <!-- Invoice Table Heading -->
+    <tr>
+        <th>APP ID</th>
+        <th>Product</th>
+        <th>Customer Name</th>
+        <th>Loan Amount</th>
+        <th>Rate</th>
+        <th>Amount</th>
+        <th>Bank</th>
+        <th>Month</th>
+    </tr>
+
+    <!-- Invoice Data -->
+    <tr>
+        <td class="center">
+            ABN_GSTS00000<br>1061450
+        </td>
+
+        <td class="center">LAP</td>
+
+        <td>
+            <b>SHREE SHYAM BIOMASS</b>
+        </td>
+
+        <td class="center">5000000</td>
+
+        <td class="center">1.53%</td>
+
+        <td class="center">76500</td>
+
+        <td class="center">
+            Aditya Birla<br>(STSL)
+        </td>
+
+        <td class="center">Aug-2026</td>
+    </tr>
+
+    <!-- Totals -->
+    <tr>
+        <td colspan="2" rowspan="4"></td>
+
+        <td class="bold">Total</td>
+
+        <td class="center">XX</td>
+
+        <td class="right">XX</td>
+
+        <td class="bold">76500</td>
+
+        <td colspan="2" rowspan="4"></td>
+    </tr>
+
+    <tr>
+        <td class="bold">ADD: CGST 9%</td>
+        <td colspan="2"></td>
+        <td class="center">6885</td>
+    </tr>
+
+    <tr>
+        <td class="bold">ADD: SGST 9%</td>
+        <td colspan="2"></td>
+        <td class="center">6885</td>
+    </tr>
+
+    <tr>
+        <td class="bold">GRAND TOTAL</td>
+        <td colspan="2"></td>
+        <td class="bold center">90270</td>
+    </tr>
+
+    <!-- Amount in Words -->
+    <tr>
+        <td colspan="8" class="amount-words">
+            Amount in Words: Ninety Thousand Two Hundred Seventy Only
+        </td>
+    </tr>
+
+    <!-- Bank and Signature Section -->
+    <tr>
+        <td colspan="5">
+            <b>Bank:</b> HDFC Bank
+            &nbsp;&nbsp;&nbsp;
+            <b>IFSC CODE:</b> HDFC0008305
+        </td>
+
+        <td colspan="3" rowspan="6" class="signature">
+            <b>For: "SHEKHAR SAIN &amp; SON'S PVT LTD"</b>
+            <br><br>
+
+            <b>Authorized Signatory</b>
+            <br><br><br>
+
+            __________________________
+            <br>
+            <b>Director</b>
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="5">
+            <b>ACCOUNT NO.</b> 50200109160783
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="5">
+            <b>GSTIN NO.</b> 06ABPCS3311R1ZS
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="5">
+            <b>PAN:</b> ABPCS3311R
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="5">
+            <b>SAC CODE:</b> 997159
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="5">
+            <b>Mode of Payment:</b> Cheque/Draft/Credit
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="5">
+            <b>Favoring:</b> "SHEKHAR SAIN &amp; SON'S PVT LTD"
+        </td>
+        <td colspan="3"></td>
+    </tr>
+
+</table>
+
 </body>
 </html>
