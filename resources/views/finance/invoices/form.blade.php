@@ -256,3 +256,70 @@
     });
 </script>
 @endpush
+
+@push('scripts')
+<script type="module">
+    /* Typing a 15 character GSTIN fills PAN and place of supply at once, then legal/trade name and address from the GST lookup. */
+    const gstField = (key) => document.querySelector(`[data-gst="${key}"]`);
+    const billField = (key) => document.querySelector(`[data-bill="${key}"]`);
+    const gstinInput = gstField('gstin');
+    const lookupUrl = @json(route('invoices.gstin.lookup', ['gstin' => 'XXXXXXXXXXXXXXX']));
+    const statusLine = document.createElement('div');
+    statusLine.className = 'form-text';
+    gstinInput?.closest('.mb-3')?.appendChild(statusLine);
+
+    let timer = null;
+    let lastLookup = '';
+
+    const showStatus = (text, isError = false) => {
+        statusLine.textContent = text ?? '';
+        statusLine.classList.toggle('text-danger', isError);
+    };
+
+    async function lookupGstin(gstin) {
+        if (gstin === lastLookup) return;
+        lastLookup = gstin;
+        showStatus('Fetching GST details...');
+
+        try {
+            const response = await fetch(lookupUrl.replace('XXXXXXXXXXXXXXX', gstin), {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+            const body = await response.json().catch(() => null);
+
+            if (!response.ok || !body?.success) {
+                lastLookup = '';
+                showStatus(body?.message ?? 'GST details could not be fetched.', true);
+                return;
+            }
+
+            const d = body.data;
+            gstField('pan').value = d.pan ?? '';
+            gstField('place').value = d.place_of_supply ?? '';
+            if (d.legal_name) gstField('legal').value = d.legal_name;
+            if (d.trade_name) gstField('trade').value = d.trade_name;
+            if (d.address && billField('address') && !billField('address').value) billField('address').value = d.address;
+            if (d.legal_name && billField('name') && !billField('name').value) billField('name').value = d.trade_name || d.legal_name;
+
+            showStatus(body.message ?? (d.status ? `GST status: ${d.status}` : 'GST details filled.'));
+        } catch (error) {
+            lastLookup = '';
+            showStatus('GST details could not be fetched right now. Please try again.', true);
+        }
+    }
+
+    gstinInput?.addEventListener('input', () => {
+        clearTimeout(timer);
+        const gstin = gstinInput.value.trim().toUpperCase();
+
+        if (gstin.length !== 15) {
+            lastLookup = '';
+            showStatus('');
+            return;
+        }
+
+        timer = setTimeout(() => lookupGstin(gstin), 400);
+    });
+</script>
+@endpush
