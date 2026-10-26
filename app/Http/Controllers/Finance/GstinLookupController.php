@@ -84,14 +84,17 @@ class GstinLookupController extends Controller
             return null;
         }
 
-        $json = $response->json();
+        $body = $response->json();
+        // The provider wraps the taxpayer record in "data": {"success": true, "data": {...}}.
+        $json = is_array($body['data'] ?? null) ? $body['data'] : (is_array($body) ? $body : []);
         $legal = $json['legal_name'] ?? null;
 
         if (blank($legal)) {
             return null;
         }
 
-        $address = collect([$json['address'] ?? null, $json['pincode'] ?? null])
+        $pincode = $json['pincode'] ?? ($json['address_details']['pincode'] ?? null);
+        $address = collect([$json['address'] ?? null, $pincode])
             ->filter(fn ($part) => filled($part))
             ->implode(', ');
 
