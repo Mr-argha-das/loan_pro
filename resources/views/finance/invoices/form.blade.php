@@ -259,11 +259,13 @@
 
 @push('scripts')
 <script type="module">
-    /* Typing a 15 character GSTIN fills PAN and place of supply at once, then legal/trade name and address from the GST lookup. */
+    /* Typing a 15 character GSTIN fills PAN and place of supply straight away (from the number itself),
+       then legal name, trade name and address from the GST lookup. */
     const gstField = (key) => document.querySelector(`[data-gst="${key}"]`);
     const billField = (key) => document.querySelector(`[data-bill="${key}"]`);
     const gstinInput = gstField('gstin');
-    const lookupUrl = @json(route('invoices.gstin.lookup', ['gstin' => 'XXXXXXXXXXXXXXX']));
+    const stateNames = @json(\App\Support\GstinDetails::STATES);
+    const lookupPath = @json(parse_url(route('invoices.gstin.lookup', ['gstin' => 'XXXXXXXXXXXXXXX']), PHP_URL_PATH));
     const statusLine = document.createElement('div');
     statusLine.className = 'form-text';
     gstinInput?.closest('.mb-3')?.appendChild(statusLine);
@@ -276,13 +278,22 @@
         statusLine.classList.toggle('text-danger', isError);
     };
 
+    /* Offline part: PAN is characters 3-12, place of supply comes from the 2-digit state code. */
+    function fillFromNumber(gstin) {
+        const pan = gstin.substring(2, 12);
+        const code = gstin.substring(0, 2);
+        const pos = stateNames[code] ? `${code}-${stateNames[code]}` : '';
+        if (gstField('pan')) gstField('pan').value = pan;
+        if (gstField('place') && pos) gstField('place').value = pos;
+    }
+
     async function lookupGstin(gstin) {
         if (gstin === lastLookup) return;
         lastLookup = gstin;
-        showStatus('Fetching GST details...');
+        showStatus('Fetching legal name and address...');
 
         try {
-            const response = await fetch(lookupUrl.replace('XXXXXXXXXXXXXXX', gstin), {
+            const response = await fetch(lookupPath.replace('XXXXXXXXXXXXXXX', gstin), {
                 headers: { Accept: 'application/json' },
                 credentials: 'same-origin',
             });
@@ -290,13 +301,13 @@
 
             if (!response.ok || !body?.success) {
                 lastLookup = '';
-                showStatus(body?.message ?? 'GST details could not be fetched.', true);
+                showStatus(body?.message ?? `GST lookup failed (HTTP ${response.status}).`, true);
                 return;
             }
 
             const d = body.data;
-            gstField('pan').value = d.pan ?? '';
-            gstField('place').value = d.place_of_supply ?? '';
+            if (d.pan) gstField('pan').value = d.pan;
+            if (d.place_of_supply) gstField('place').value = d.place_of_supply;
             if (d.legal_name) gstField('legal').value = d.legal_name;
             if (d.trade_name) gstField('trade').value = d.trade_name;
             if (d.address && billField('address') && !billField('address').value) billField('address').value = d.address;
@@ -319,6 +330,7 @@
             return;
         }
 
+        fillFromNumber(gstin);
         timer = setTimeout(() => lookupGstin(gstin), 400);
     });
 </script>
