@@ -8,6 +8,15 @@
         : null;
 @endphp
 
+<style>
+    td.text-end .btn-light{
+        background: #B8D8F8!important;
+        color: #000!important;
+        border-radius: 5px!important;
+        margin-right: 2px!important;
+    }
+</style>
+
 <header class="lp-header">
     <button class="btn btn-icon btn-light lp-sidebar-toggle" data-sidebar-toggle aria-label="Toggle navigation" aria-controls="lp-sidebar" aria-expanded="false">
         <i class="bi bi-list"></i>

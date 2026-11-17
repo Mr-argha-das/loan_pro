@@ -12,6 +12,88 @@
 @endsection
 
 @section('content')
+<style>
+    .lp-stat {
+    min-width: 0;
+     background: linear-gradient(135deg, #1689ed, #0871e8)!important;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius);
+    padding: 18px;
+    height: 100%;
+    box-shadow: var(--lp-shadow-xs);
+    transition: box-shadow var(--lp-transition), transform var(--lp-transition);
+}
+
+/* Gradients */
+.card-blue {
+    background: linear-gradient(135deg, #1689ed, #0871e8)!important;
+}
+
+.card-green {
+    background: linear-gradient(135deg, #35ca72, #0cae5c)!important;
+}
+
+.card-purple {
+    background: linear-gradient(135deg, #9550ed, #7b35df)!important;
+}
+
+.card-orange {
+    background: linear-gradient(135deg, #ffc536, #ff9e19)!important;
+}
+
+.card-red {
+    background: linear-gradient(135deg, #fa3d4e, #ed1c35)!important;
+}
+
+.card-cyan {
+    background: linear-gradient(135deg, #16c7c6, #08a9bd)!important;
+}
+
+.card-blue-dark {
+    background: linear-gradient(135deg, #4778e8, #2459ca)!important;
+}
+
+.card-pink {
+    background: linear-gradient(135deg, #ed4c9c, #dd2180)!important;
+}
+
+.lp-stat__label{
+    color: #fff!important;
+}
+
+.lp-stat__value{
+   color: #fff!important; 
+}
+
+.lp-stat__meta{
+     color: #fff!important; 
+}
+
+.lp-stat__meta span.fw-semibold.text-success{
+    color: #fff!important; 
+}
+
+/* Left Icon */
+.lp-stat__icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 11px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 23px;
+    font-weight: 400;
+
+    background: rgba(255, 255, 255, 0.18)!important;
+    border: 1px solid rgba(255, 255, 255, 0.08)!important;
+    color: #fff!important;
+    box-shadow: inset 0 1px 5px rgba(255, 255, 255, 0.12)!important;
+}
+    
+</style>
     <form method="GET" action="{{ route('payments.index') }}" class="lp-card mb-4">
         <div class="lp-card__body">
             <div class="row g-2 align-items-end">
@@ -41,12 +123,12 @@
     </form>
 
     <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-2"><x-stat-card label="Employees" :value="$totals['employees']" icon="bi-people" tone="primary" meta="in {{ \Illuminate\Support\Carbon::createFromFormat('Y-m', $month)->format('M Y') }}" /></div>
-        <div class="col-6 col-xl-2"><x-stat-card label="Approved leads" :value="$totals['leads']" icon="bi-patch-check" tone="info" /></div>
-        <div class="col-6 col-xl-2"><x-stat-card label="Total coins" :value="number_format($totals['coins'], 2)" icon="bi-coin" tone="warning" /></div>
-        <div class="col-6 col-xl-2"><x-stat-card label="Total payable" :value="\App\Support\Format::money($totals['payable'])" icon="bi-wallet2" tone="primary" /></div>
-        <div class="col-6 col-xl-2"><x-stat-card label="Paid" :value="\App\Support\Format::money($totals['paid'])" icon="bi-check2-circle" tone="success" /></div>
-        <div class="col-6 col-xl-2"><x-stat-card label="Unpaid" :value="\App\Support\Format::money($totals['unpaid'])" icon="bi-exclamation-circle" tone="danger" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Employees" :value="$totals['employees']" icon="bi-people" tone="primary" meta="in {{ \Illuminate\Support\Carbon::createFromFormat('Y-m', $month)->format('M Y') }}" class="card-blue" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Approved leads" :value="$totals['leads']" icon="bi-patch-check" tone="info" class="card-green" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Total coins" :value="number_format($totals['coins'], 2)" icon="bi-coin" tone="warning" class="card-purple" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Total payable" :value="\App\Support\Format::money($totals['payable'])" icon="bi-wallet2" tone="primary" class="card-orange" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Paid" :value="\App\Support\Format::money($totals['paid'])" icon="bi-check2-circle" tone="success" class="card-red" /></div>
+        <div class="col-6 col-xl-2"><x-stat-card label="Unpaid" :value="\App\Support\Format::money($totals['unpaid'])" icon="bi-exclamation-circle" tone="danger" class="card-cyan" /></div>
     </div>
 
     <x-card title="Payments" icon="bi-wallet2" :subtitle="'Figures for '.\Illuminate\Support\Carbon::createFromFormat('Y-m', $month)->format('F Y')" padding="false">

@@ -21,11 +21,93 @@
 @endsection
 
 @section('content')
+<style>
+    .lp-stat {
+    min-width: 0;
+     background: linear-gradient(135deg, #1689ed, #0871e8)!important;
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius);
+    padding: 18px;
+    height: 100%;
+    box-shadow: var(--lp-shadow-xs);
+    transition: box-shadow var(--lp-transition), transform var(--lp-transition);
+}
+
+/* Gradients */
+.card-blue {
+    background: linear-gradient(135deg, #1689ed, #0871e8)!important;
+}
+
+.card-green {
+    background: linear-gradient(135deg, #35ca72, #0cae5c)!important;
+}
+
+.card-purple {
+    background: linear-gradient(135deg, #9550ed, #7b35df)!important;
+}
+
+.card-orange {
+    background: linear-gradient(135deg, #ffc536, #ff9e19)!important;
+}
+
+.card-red {
+    background: linear-gradient(135deg, #fa3d4e, #ed1c35)!important;
+}
+
+.card-cyan {
+    background: linear-gradient(135deg, #16c7c6, #08a9bd)!important;
+}
+
+.card-blue-dark {
+    background: linear-gradient(135deg, #4778e8, #2459ca)!important;
+}
+
+.card-pink {
+    background: linear-gradient(135deg, #ed4c9c, #dd2180)!important;
+}
+
+.lp-stat__label{
+    color: #fff!important;
+}
+
+.lp-stat__value{
+   color: #fff!important; 
+}
+
+.lp-stat__meta{
+     color: #fff!important; 
+}
+
+.lp-stat__meta span.fw-semibold.text-success{
+    color: #fff!important; 
+}
+
+/* Left Icon */
+.lp-stat__icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 11px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 23px;
+    font-weight: 400;
+
+    background: rgba(255, 255, 255, 0.18)!important;
+    border: 1px solid rgba(255, 255, 255, 0.08)!important;
+    color: #fff!important;
+    box-shadow: inset 0 1px 5px rgba(255, 255, 255, 0.12)!important;
+}
+    
+</style>
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3"><x-stat-card label="Total employees" :value="number_format($stats['total'])" icon="bi-people" tone="primary" /></div>
-        <div class="col-6 col-lg-3"><x-stat-card label="Active" :value="number_format($stats['active'])" icon="bi-person-check" tone="green" /></div>
-        <div class="col-6 col-lg-3"><x-stat-card label="Present today" :value="number_format($stats['present_today'])" icon="bi-calendar-check" tone="blue" /></div>
-        <div class="col-6 col-lg-3"><x-stat-card label="On leave" :value="number_format($stats['on_leave'] ?? 0)" icon="bi-airplane" tone="orange" /></div>
+        <div class="col-6 col-lg-3"><x-stat-card label="Total employees" :value="number_format($stats['total'])" icon="bi-people" tone="primary" class="card-blue" /></div>
+        <div class="col-6 col-lg-3"><x-stat-card label="Active" :value="number_format($stats['active'])" icon="bi-person-check" tone="green" class="card-green" /></div>
+        <div class="col-6 col-lg-3"><x-stat-card label="Present today" :value="number_format($stats['present_today'])" icon="bi-calendar-check" tone="blue" class="card-purple" /></div>
+        <div class="col-6 col-lg-3"><x-stat-card label="On leave" :value="number_format($stats['on_leave'] ?? 0)" icon="bi-airplane" tone="orange" class="card-red" /></div>
     </div>
 
     <x-filter-panel :action="route('employees.index')" :reset-url="route('employees.index')">

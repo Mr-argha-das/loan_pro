@@ -43,7 +43,7 @@
                     <td>{{ $lender->processing_time_days ? $lender->processing_time_days.' days' : '—' }}</td>
                     <td><x-status-badge :status="$lender->status" /></td>
                     <td class="text-end">
-                        <a href="{{ route('lenders.show', $lender) }}" class="btn btn-sm btn-light" title="Open"><i class="bi bi-eye"></i></a>
+                        <a href="{{ route('lenders.show', $lender) }}" class="btn btn-sm btn-light" title="Open" style="background: #2563EB; color: #fff;"><i class="bi bi-eye"></i></a>
                     </td>
                 </tr>
             @empty
