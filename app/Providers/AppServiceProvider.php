@@ -36,6 +36,22 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
+        // Read the page number leniently: a polluted value ("2?_ts=1699999999")
+        // still points at the requested page instead of falling back to page 1.
+        Paginator::currentPageResolver(function ($pageName = 'page') {
+            $page = request()->input($pageName, 1);
+
+            if (is_string($page) && preg_match('/^(\d+)/', $page, $matches)) {
+                $page = $matches[1];
+            }
+
+            if (filter_var($page, FILTER_VALIDATE_INT) !== false && (int) $page >= 1) {
+                return (int) $page;
+            }
+
+            return 1;
+        });
+
         $this->registerGates();
         $this->registerBladeDirectives();
         $this->registerViewComposers();
