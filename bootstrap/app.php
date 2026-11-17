@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             \App\Http\Middleware\SetLocaleAndTimezone::class,
+            \App\Http\Middleware\CleansAjaxQuery::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));

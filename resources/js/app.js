@@ -126,8 +126,21 @@ window.LoanPro = {
         }
 
         container.classList.add('opacity-50');
-        const query = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
-        const payload = await LoanPro.request(`${url}?${query}`, {
+
+        // Merge the parameters into the query string of the target URL instead of
+        // appending a second "?" - a broken URL turns "?page=2" into "?page=2?_ts=..."
+        // and the server then falls back to page 1.
+        const target = new URL(url, window.location.origin);
+
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                target.searchParams.set(key, value);
+            }
+        });
+
+        target.searchParams.set('_ts', Date.now());
+
+        const payload = await LoanPro.request(target.toString(), {
             headers: { Accept: 'application/json' },
         });
         container.innerHTML = payload.html;

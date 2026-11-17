@@ -15,6 +15,7 @@ use App\Policies\InvoicePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\LoanApplicationPolicy;
 use App\Policies\PaymentPolicy;
+use App\Services\LocationService;
 use App\Services\NotificationService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
@@ -26,12 +27,30 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // One instance per request, so the office settings are read only once
+        // while the attendance register renders.
+        $this->app->singleton(LocationService::class);
     }
 
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        // Read the page number leniently: a polluted value ("2?_ts=1699999999")
+        // still points at the requested page instead of falling back to page 1.
+        Paginator::currentPageResolver(function ($pageName = 'page') {
+            $page = request()->input($pageName, 1);
+
+            if (is_string($page) && preg_match('/^(\d+)/', $page, $matches)) {
+                $page = $matches[1];
+            }
+
+            if (filter_var($page, FILTER_VALIDATE_INT) !== false && (int) $page >= 1) {
+                return (int) $page;
+            }
+
+            return 1;
+        });
 
         $this->registerGates();
         $this->registerBladeDirectives();

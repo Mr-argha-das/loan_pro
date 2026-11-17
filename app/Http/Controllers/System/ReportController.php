@@ -237,7 +237,7 @@ class ReportController extends Controller
             ],
 
             'attendance' => [
-                ['Date', 'Employee', 'Code', 'Check In', 'Check Out', 'Hours', 'Status'],
+                ['Date', 'Employee', 'Code', 'Check In', 'Check Out', 'Hours', 'Location', 'Status'],
                 Attendance::query()
                     ->with(['employee.user'])
                     ->whereBetween('attendance_date', [$from->toDateString(), $to->toDateString()])
@@ -247,7 +247,7 @@ class ReportController extends Controller
                     ->map(fn (Attendance $a) => [
                         $a->attendance_date?->format('d M Y'), $a->employee?->user?->name, $a->employee?->employee_code,
                         $a->check_in_at?->format('h:i A'), $a->check_out_at?->format('h:i A'),
-                        round($a->worked_minutes / 60, 1), $a->status,
+                        round($a->worked_minutes / 60, 1), $a->place('in'), $a->status,
                     ]),
                 $meta,
             ],

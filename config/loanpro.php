@@ -344,4 +344,23 @@ return [
         'half_day_minutes' => 300,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Location naming
+    |--------------------------------------------------------------------------
+    |
+    | Check-in / check-out GPS fixes are shown with a place name instead of raw
+    | coordinates. The office configured in Settings wins, then the reverse
+    | geocode provider below, then the closest city from `config/geo.php`.
+    |
+    */
+
+    'geocoding' => [
+        'enabled' => env('GEOCODING_ENABLED', true),
+        'endpoint' => env('GEOCODING_ENDPOINT', 'https://nominatim.openstreetmap.org/reverse'),
+        'user_agent' => env('GEOCODING_USER_AGENT', 'LoanPro Attendance'),
+        'timeout' => (int) env('GEOCODING_TIMEOUT', 3),
+        'city_radius_km' => (float) env('GEOCODING_CITY_RADIUS_KM', 60),
+    ],
+
 ];

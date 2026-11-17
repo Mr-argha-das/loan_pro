@@ -238,6 +238,80 @@ for (const [name, path] of PAGES) {
     await shot(`page-${name}`);
 }
 
+// ------------------------------------------------- regression checks
+console.log('\n== regression checks ==');
+
+// Serial numbers: LD001 / CM001 / IN001
+await goto('/leads');
+const leadCodes = await page.$$eval('#lead-table tbody tr td:first-child', (tds) => tds.map((td) => td.innerText.trim()));
+assert(
+    'lead ids use the LD + 3 digit series',
+    leadCodes.length > 0 && leadCodes.every((code) => /^LD\d{3}$/.test(code)),
+    leadCodes.slice(0, 3).join(',')
+);
+
+await goto('/customers');
+const customerCodes = await page.$$eval(
+    '#customer-table-body tbody tr td:first-child div.text-muted',
+    (nodes) => nodes.map((node) => node.innerText.trim()).filter((text) => text.startsWith('CM'))
+);
+assert(
+    'customer ids use the CM + 3 digit series',
+    customerCodes.length > 0 && customerCodes.every((code) => /^CM\d{3}$/.test(code)),
+    customerCodes.slice(0, 3).join(',')
+);
+
+await goto('/invoices');
+const invoiceNumbers = await page.$$eval(
+    '#invoice-table-body tbody tr td:first-child a',
+    (links) => links.map((link) => link.innerText.trim())
+);
+assert(
+    'invoice numbers use the IN + 3 digit series',
+    invoiceNumbers.length > 0 && invoiceNumbers.every((number) => /^IN\d{3}$/.test(number)),
+    invoiceNumbers.slice(0, 3).join(',')
+);
+
+// Lead pagination (AJAX refresh of the table)
+await goto('/leads');
+const firstPageCodes = await page.$$eval('#lead-table tbody tr td:first-child', (tds) => tds.map((td) => td.innerText.trim()));
+const hasSecondPage = await page.evaluate(() =>
+    Boolean([...document.querySelectorAll('#lead-table .pagination a')].find((a) => a.getAttribute('href')?.includes('page=2')))
+);
+assert('leads list offers a second page', hasSecondPage);
+if (hasSecondPage) {
+    await page.evaluate(() =>
+        [...document.querySelectorAll('#lead-table .pagination a')]
+            .find((a) => a.getAttribute('href')?.includes('page=2'))
+            .click()
+    );
+    await page
+        .waitForFunction(() => document.querySelector('#lead-table .pagination .active')?.innerText.trim() === '2', { timeout: 30000 })
+        .catch(() => {});
+    const secondPageCodes = await page.$$eval('#lead-table tbody tr td:first-child', (tds) => tds.map((td) => td.innerText.trim()));
+    assert(
+        'lead pagination moves to page 2',
+        secondPageCodes.length > 0 && secondPageCodes[0] !== firstPageCodes[0],
+        `page 1 ${firstPageCodes[0]} -> page 2 ${secondPageCodes[0]}`
+    );
+}
+
+// Attendance register: personal rows + a readable location name
+await goto('/attendance');
+const attendance = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('#attendance-table-body tbody tr')];
+    return {
+        employees: [...new Set(rows.map((row) => row.children[1]?.innerText.trim()).filter(Boolean))],
+        locations: rows.map((row) => row.children[7]?.innerText.trim() ?? ''),
+    };
+});
+assert('attendance register lists only the signed in user', attendance.employees.length <= 1, attendance.employees.join(', '));
+assert(
+    'attendance register shows a location name',
+    attendance.locations.some((location) => /[A-Za-z]{3}/.test(location)),
+    attendance.locations.slice(0, 2).join(' | ')
+);
+
 // ------------------------------------------------------------ assertions
 console.log('\n== assertions ==');
 const ok = results.pages.filter((entry) => entry.status >= 200 && entry.status < 400 && !entry.error);

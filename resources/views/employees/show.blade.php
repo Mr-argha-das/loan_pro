@@ -97,6 +97,7 @@
                                 <th scope="col">Check in</th>
                                 <th scope="col">Check out</th>
                                 <th scope="col">Hours</th>
+                                <th scope="col">Location</th>
                                 <th scope="col">Status</th>
                             </tr>
                         </thead>
@@ -107,10 +108,11 @@
                                     <td>{{ \App\Support\Format::time($record->check_in_at) }}</td>
                                     <td>{{ \App\Support\Format::time($record->check_out_at) }}</td>
                                     <td>{{ $record->workedHours() ?? '—' }}</td>
+                                    <td class="small">{{ $record->place('in') ?? '—' }}</td>
                                     <td><x-status-badge :status="$record->status" /></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5"><x-empty-state icon="bi-calendar-x" title="No attendance yet" message="Daily check-ins will be listed here." /></td></tr>
+                                <tr><td colspan="6"><x-empty-state icon="bi-calendar-x" title="No attendance yet" message="Daily check-ins will be listed here." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

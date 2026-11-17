@@ -4,10 +4,9 @@ namespace App\Http\Controllers\System;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
-use App\Models\Department;
-use App\Models\Employee;
 use App\Models\Leave;
 use App\Services\ExportService;
+use App\Services\LocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,16 +21,15 @@ class AttendanceController extends Controller
         $user = $request->user();
         $month = $request->string('month', now()->format('Y-m'))->toString();
 
+        // Attendance is personal: a user only ever sees their own register.
         $query = Attendance::query()
             ->with(['employee.user', 'employee.department'])
+            ->where('employee_id', $user->employee?->id)
             ->whereBetween('attendance_date', [
                 \Illuminate\Support\Carbon::parse($month.'-01')->startOfMonth(),
                 \Illuminate\Support\Carbon::parse($month.'-01')->endOfMonth(),
             ])
-            ->when(! $user->hasPermissionTo('attendance.view'), fn ($q) => $q->where('employee_id', $user->employee?->id))
-            ->when($request->filled('employee_id'), fn ($q) => $q->where('employee_id', $request->integer('employee_id')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->when($request->filled('department_id'), fn ($q) => $q->whereHas('employee', fn ($e) => $e->where('department_id', $request->integer('department_id'))))
             ->orderByDesc('attendance_date');
 
         $records = $query->paginate($this->perPage($request))->withQueryString();
@@ -49,12 +47,10 @@ class AttendanceController extends Controller
             'records' => $records,
             'month' => $month,
             'today' => $today,
-            'employees' => Employee::query()->with('user')->get(),
-            'departments' => Department::query()->active()->ordered()->get(),
             'summary' => $this->summary($user, $month),
             'leaves' => Leave::query()
                 ->with(['employee.user'])
-                ->when(! $user->hasPermissionTo('attendance.view'), fn ($q) => $q->where('employee_id', $user->employee?->id))
+                ->where('employee_id', $user->employee?->id)
                 ->latest()
                 ->limit(10)
                 ->get(),
@@ -65,7 +61,7 @@ class AttendanceController extends Controller
     protected function summary($user, string $month): array
     {
         $base = fn () => Attendance::query()
-            ->when(! $user->hasPermissionTo('attendance.view'), fn ($q) => $q->where('employee_id', $user->employee?->id))
+            ->where('employee_id', $user->employee?->id)
             ->whereBetween('attendance_date', [
                 \Illuminate\Support\Carbon::parse($month.'-01')->startOfMonth(),
                 \Illuminate\Support\Carbon::parse($month.'-01')->endOfMonth(),
@@ -81,7 +77,11 @@ class AttendanceController extends Controller
         ];
     }
 
-    /** Optional browser GPS fix sent with check-in/out. Invalid or missing values are stored as null. */
+    /**
+     * Optional browser GPS fix sent with check-in/out. Invalid or missing values are stored as null.
+     * A readable place name is resolved next to the coordinates so the register can
+     * show "Head Office" or "Pune, Maharashtra" instead of raw coordinates.
+     */
     protected function location(Request $request): array
     {
         $lat = $request->input('latitude');
@@ -89,9 +89,13 @@ class AttendanceController extends Controller
         $valid = is_numeric($lat) && is_numeric($lng)
             && abs((float) $lat) <= 90 && abs((float) $lng) <= 180;
 
+        $lat = $valid ? round((float) $lat, 7) : null;
+        $lng = $valid ? round((float) $lng, 7) : null;
+
         return [
-            'lat' => $valid ? round((float) $lat, 7) : null,
-            'lng' => $valid ? round((float) $lng, 7) : null,
+            'lat' => $lat,
+            'lng' => $lng,
+            'place' => $valid ? app(LocationService::class)->name($lat, $lng) : null,
         ];
     }
 
@@ -127,6 +131,7 @@ class AttendanceController extends Controller
                 'check_in_at' => now(),
                 'check_in_lat' => $location['lat'],
                 'check_in_lng' => $location['lng'],
+                'check_in_location' => $location['place'],
                 'status' => $lateMinutes > $grace ? 'late' : 'present',
                 'late_minutes' => $lateMinutes > $grace ? $lateMinutes : 0,
                 'work_mode' => $request->input('work_mode', 'office'),
@@ -172,6 +177,7 @@ class AttendanceController extends Controller
             'check_out_at' => now(),
             'check_out_lat' => $location['lat'],
             'check_out_lng' => $location['lng'],
+            'check_out_location' => $location['place'],
             'worked_minutes' => $worked,
             'status' => $worked < $halfDayMinutes ? 'half_day' : $attendance->status,
         ])->save();
@@ -253,6 +259,7 @@ class AttendanceController extends Controller
 
         $rows = Attendance::query()
             ->with(['employee.user', 'employee.department'])
+            ->where('employee_id', $request->user()->employee?->id)
             ->whereBetween('attendance_date', [
                 \Illuminate\Support\Carbon::parse($month.'-01')->startOfMonth(),
                 \Illuminate\Support\Carbon::parse($month.'-01')->endOfMonth(),
@@ -268,11 +275,13 @@ class AttendanceController extends Controller
                 $a->check_in_at?->format('h:i A'),
                 $a->check_out_at?->format('h:i A'),
                 round($a->worked_minutes / 60, 1),
+                $a->place('in'),
+                $a->place('out'),
                 $a->status,
             ]);
 
         return $export->xlsx('attendance-'.$month.'.xlsx', [
-            'Date', 'Employee', 'Code', 'Department', 'Check In', 'Check Out', 'Hours', 'Status',
+            'Date', 'Employee', 'Code', 'Department', 'Check In', 'Check Out', 'Hours', 'Check In Location', 'Check Out Location', 'Status',
         ], $rows, 'Attendance', [
             'Report' => 'Attendance Register - '.$month,
             'Generated By' => $request->user()->name,
