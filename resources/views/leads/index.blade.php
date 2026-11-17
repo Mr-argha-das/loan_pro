@@ -189,15 +189,6 @@
 
 @push('scripts')
 <script type="module">
-    const tableUrl = '{{ route('leads.index') }}';
-
-    // Server-side table refresh (AJAX + fetch) - pagination and filters stay in sync.
-    async function refresh() {
-        const params = new URLSearchParams(new FormData(document.querySelector('.lp-filter-panel form')));
-        await LoanPro.reloadTable(tableUrl, '#lead-table', Object.fromEntries(params));
-        bindRowActions();
-    }
-
     function bindRowActions() {
         document.querySelectorAll('[data-quick-view]').forEach((button) => {
             button.addEventListener('click', async () => {
@@ -222,19 +213,14 @@
                 bootstrap.Modal.getOrCreateInstance(modal).show();
             });
         });
-
-        document.querySelectorAll('#lead-table .pagination a').forEach((link) => {
-            link.addEventListener('click', async (event) => {
-                event.preventDefault();
-                await LoanPro.reloadTable(link.href, '#lead-table');
-                bindRowActions();
-            });
-        });
     }
 
-    document.querySelector('.lp-filter-panel form')?.addEventListener('submit', (event) => {
-        event.preventDefault();
-        refresh();
+    // Filters, sorting and pagination refresh the table over AJAX, so the page
+    // number always reaches the server (?page=2) together with the active filters.
+    LoanPro.bindTableFilters({
+        url: '{{ route('leads.index') }}',
+        container: '#lead-table',
+        afterReload: () => bindRowActions(),
     });
 
     bindRowActions();

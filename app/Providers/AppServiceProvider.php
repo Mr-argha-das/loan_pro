@@ -15,6 +15,7 @@ use App\Policies\InvoicePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\LoanApplicationPolicy;
 use App\Policies\PaymentPolicy;
+use App\Services\LocationService;
 use App\Services\NotificationService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
@@ -26,7 +27,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // One instance per request, so the office settings are read only once
+        // while the attendance register renders.
+        $this->app->singleton(LocationService::class);
     }
 
     public function boot(): void

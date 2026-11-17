@@ -30,10 +30,15 @@
                     </td>
                     <td>{{ \App\Support\Format::titleCase($record->work_mode ?? 'office') }}</td>
                     <td class="small">
-                        @foreach ([['In', $record->check_in_lat, $record->check_in_lng], ['Out', $record->check_out_lat, $record->check_out_lng]] as [$label, $lat, $lng])
+                        @foreach ([['In', $record->check_in_lat, $record->check_in_lng, $record->place('in')], ['Out', $record->check_out_lat, $record->check_out_lng, $record->place('out')]] as [$label, $lat, $lng, $place])
                             <div class="text-nowrap">
                                 <span class="text-muted">{{ $label }}:</span>
-                                @if ($lat !== null && $lng !== null)
+                                @if ($place)
+                                    <span class="fw-semibold">{{ $place }}</span>
+                                    @if ($lat !== null && $lng !== null)
+                                        <a href="https://www.google.com/maps?q={{ $lat }},{{ $lng }}" target="_blank" rel="noopener" title="{{ number_format((float) $lat, 5) }}, {{ number_format((float) $lng, 5) }}"><i class="bi bi-geo-alt"></i></a>
+                                    @endif
+                                @elseif ($lat !== null && $lng !== null)
                                     <a href="https://www.google.com/maps?q={{ $lat }},{{ $lng }}" target="_blank" rel="noopener">{{ number_format((float) $lat, 5) }}, {{ number_format((float) $lng, 5) }}</a>
                                 @else
                                     <span class="text-muted">Not captured</span>

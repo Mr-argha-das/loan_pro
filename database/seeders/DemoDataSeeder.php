@@ -25,6 +25,7 @@ use App\Models\ProductSubcategory;
 use App\Models\Remark;
 use App\Models\User;
 use App\Services\CodeGeneratorService;
+use App\Services\LocationService;
 use App\Services\NotificationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -533,8 +534,16 @@ class DemoDataSeeder extends Seeder
     {
         $employees = Employee::query()->get();
         $statuses = ['present', 'present', 'present', 'present', 'late', 'half_day', 'leave', 'absent'];
+        $locations = app(LocationService::class);
+        $cities = collect(config('geo.cities'))->keyBy('name');
 
         foreach ($employees as $employee) {
+            // Everyone checks in from the office of their own city.
+            $city = $cities->get($employee->city);
+            $baseLat = (float) ($city['lat'] ?? 19.0760);
+            $baseLng = (float) ($city['lng'] ?? 72.8777);
+            $place = $locations->name($baseLat, $baseLng, allowGeocode: false);
+
             for ($day = 40; $day >= 0; $day--) {
                 $date = now()->subDays($day);
 
@@ -551,6 +560,11 @@ class DemoDataSeeder extends Seeder
                 $checkOut = $checkIn->copy()->addHours(random_int(7, 10))->addMinutes(random_int(0, 55));
                 $workedMinutes = $status === 'half_day' ? random_int(200, 280) : (int) $checkIn->diffInMinutes($checkOut);
 
+                $checkInLat = round($baseLat + random_int(-20, 20) / 1000, 6);
+                $checkInLng = round($baseLng + random_int(-20, 20) / 1000, 6);
+                $checkOutLat = round($baseLat + random_int(-30, 30) / 1000, 6);
+                $checkOutLng = round($baseLng + random_int(-30, 30) / 1000, 6);
+
                 Attendance::query()->create([
                     'employee_id' => $employee->id,
                     'attendance_date' => $date->toDateString(),
@@ -560,6 +574,12 @@ class DemoDataSeeder extends Seeder
                     'late_minutes' => $status === 'late' ? random_int(16, 65) : 0,
                     'status' => $status,
                     'work_mode' => random_int(0, 3) === 0 ? 'remote' : 'office',
+                    'check_in_lat' => in_array($status, ['absent', 'leave'], true) ? null : $checkInLat,
+                    'check_in_lng' => in_array($status, ['absent', 'leave'], true) ? null : $checkInLng,
+                    'check_in_location' => in_array($status, ['absent', 'leave'], true) ? null : $place,
+                    'check_out_lat' => in_array($status, ['absent', 'leave'], true) ? null : $checkOutLat,
+                    'check_out_lng' => in_array($status, ['absent', 'leave'], true) ? null : $checkOutLng,
+                    'check_out_location' => in_array($status, ['absent', 'leave'], true) ? null : $place,
                     'remarks' => $status === 'leave' ? 'Approved casual leave' : null,
                 ]);
             }

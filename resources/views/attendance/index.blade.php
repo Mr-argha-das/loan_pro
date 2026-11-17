@@ -3,7 +3,7 @@
 @section('title', 'Attendance')
 @section('page-header', true)
 @section('page-title', 'Attendance')
-@section('page-subtitle', 'Daily check-in/out, late marks, work mode and leave requests.')
+@section('page-subtitle', 'Your daily check-in/out, late marks, work mode and leave requests.')
 
 @section('breadcrumb')
     <li class="breadcrumb-item active" aria-current="page">Attendance</li>
@@ -129,7 +129,7 @@
                     <div class="d-flex align-items-center gap-2">
                         <span class="lp-tone-primary rounded-3 d-grid" style="width:34px;height:34px;place-items:center"><i class="bi bi-calendar3"></i></span>
                         <div>
-                            <h2 class="lp-card__title">Attendance register</h2>
+                            <h2 class="lp-card__title">My attendance register</h2>
                             <div class="text-muted" style="font-size:.78rem">{{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</div>
                         </div>
                     </div>
@@ -138,26 +138,15 @@
                 <div class="p-3 pb-0">
                     <form method="GET" action="{{ route('attendance.index') }}" class="row g-2 align-items-end">
                         <div class="col-md-3"><label class="form-label" for="month">Month</label><input type="month" class="form-control" id="month" name="month" value="{{ $month }}"></div>
-                        @if (auth()->user()->isAdmin() || auth()->user()->hasPermissionTo('attendance.manage'))
-                            <div class="col-md-3">
-                                <label class="form-label" for="employee_id">Employee</label>
-                                <select class="form-select" id="employee_id" name="employee_id">
-                                    <option value="">Everyone</option>
-                                    @foreach ($employees as $employee)
-                                        <option value="{{ $employee->id }}" @selected((int) request('employee_id') === $employee->id)>{{ $employee->user?->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label" for="department_id">Department</label>
-                                <select class="form-select" id="department_id" name="department_id">
-                                    <option value="">All departments</option>
-                                    @foreach ($departments as $department)
-                                        <option value="{{ $department->id }}" @selected((int) request('department_id') === $department->id)>{{ $department->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endif
+                        <div class="col-md-3">
+                            <label class="form-label" for="status">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All statuses</option>
+                                @foreach (['present' => 'Present', 'late' => 'Late', 'absent' => 'Absent', 'half_day' => 'Half day', 'leave' => 'Leave'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </form>
                 </div>
 
@@ -196,12 +185,8 @@
         <x-modal id="leave-modal" title="Request leave" :action="route('attendance.leave.request')" submit-label="Submit request">
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label" for="leave_employee_id">Employee<span class="req">*</span></label>
-                    <select class="form-select" id="leave_employee_id" name="employee_id" required>
-                        @foreach ($employees as $employee)
-                            <option value="{{ $employee->id }}" @selected($employee->user_id === auth()->id())>{{ $employee->user?->name }}</option>
-                        @endforeach
-                    </select>
+                    <label class="form-label" for="leave_employee_name">Employee</label>
+                    <input type="text" class="form-control" id="leave_employee_name" value="{{ auth()->user()->name }}" readonly>
                 </div>
                 <div class="col-md-6">
                     <x-select name="leave_type" label="Leave type" required
